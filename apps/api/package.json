@@ -1,0 +1,16 @@
+{
+  "name": "@nexpanel/api",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "type": "commonjs",
+  "private": true,
+  "dependencies": {
+    "@nexpanel/core": "^0.1.0"
+  }
+}
