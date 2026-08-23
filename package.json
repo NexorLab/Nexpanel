@@ -1,0 +1,32 @@
+{
+  "name": "nexpanel",
+  "version": "0.1.0",
+  "description": "Modular multi-backend proxy management panel",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Vahid523/Nexpanel.git"
+  },
+  "keywords": [],
+  "author": "",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Vahid523/Nexpanel/issues"
+  },
+  "homepage": "https://github.com/Vahid523/Nexpanel#readme",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "typescript": "^7.0.2"
+  }
+}
