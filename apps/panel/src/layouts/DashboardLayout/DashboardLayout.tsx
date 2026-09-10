@@ -1,5 +1,5 @@
-import { NavLink, Outlet, useLocation, useMatches } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
 import {
   LayoutDashboard,
   Users,
@@ -40,11 +40,15 @@ export default function DashboardLayout() {
     setSidebarOpen(false);
   }, [location.pathname]);
 
-  const matches = useMatches();
-  const lastHandle = matches[matches.length - 1]?.handle as
-    | { titleKey?: string }
-    | undefined;
-  const title = lastHandle?.titleKey ? t(lastHandle.titleKey) : t("nav.dashboard");
+  // Route title comes from the leaf route's handle (titleKey). useMatches()
+  // requires a data router; with declarative <Routes> the title must be
+  // derived from the current pathname instead.
+  const title = useMemo(() => {
+    const item = [...NAV_ITEMS]
+      .sort((a, b) => b.to.length - a.to.length)
+      .find(({ to }) => to === "/" ? location.pathname === "/" : location.pathname.startsWith(to));
+    return item ? t(item.titleKey) : t("nav.dashboard");
+  }, [location.pathname, t]);
 
   const roleKey = admin ? `settings.admins.role.${admin.role}` : "";
 
