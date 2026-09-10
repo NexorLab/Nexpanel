@@ -44,7 +44,7 @@
   color: white;
 }
 
-.sidebar-nav a:first-child {
+.sidebar-nav a.active {
   background: #2563eb;
   color: white;
 }

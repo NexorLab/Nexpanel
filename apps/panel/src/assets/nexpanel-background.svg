@@ -1,0 +1,69 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1600" y2="900">
+      <stop offset="0" stop-color="#f8fbff"/>
+      <stop offset="0.5" stop-color="#eef5ff"/>
+      <stop offset="1" stop-color="#e5f0ff"/>
+    </linearGradient>
+
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse"
+      gradientTransform="translate(820 350) rotate(90) scale(420 650)">
+      <stop stop-color="#3B82F6" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#3B82F6" stop-opacity="0"/>
+    </radialGradient>
+
+    <filter id="blur">
+      <feGaussianBlur stdDeviation="1.5"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <rect width="1600" height="900" fill="url(#glow)"/>
+
+  <!-- Large subtle NexPanel N -->
+  <g opacity="0.055">
+    <path
+      d="M690 210 L820 340 L950 210 L1090 350 L960 480 L830 350 L700 480"
+      stroke="#2563EB"
+      stroke-width="75"
+      stroke-linecap="round"
+      stroke-linejoin="round"/>
+  </g>
+
+  <!-- Left circuits -->
+  <g stroke="#60A5FA" stroke-opacity="0.22" stroke-width="2">
+    <path d="M0 190 H260 L330 260 H500"/>
+    <path d="M0 310 H180 L250 380 H430 L500 310 H620"/>
+    <path d="M0 610 H220 L290 540 H470"/>
+    <path d="M80 720 H300 L380 640 H560"/>
+    <path d="M180 110 H390 L460 180 H650"/>
+  </g>
+
+  <!-- Right circuits -->
+  <g stroke="#60A5FA" stroke-opacity="0.22" stroke-width="2">
+    <path d="M1000 180 H1190 L1260 110 H1500"/>
+    <path d="M1080 290 H1240 L1320 210 H1600"/>
+    <path d="M1050 600 H1240 L1320 680 H1600"/>
+    <path d="M980 720 H1160 L1240 640 H1450 L1510 580 H1600"/>
+  </g>
+
+  <!-- Circuit nodes -->
+  <g fill="#60A5FA" fill-opacity="0.28">
+    <circle cx="330" cy="260" r="5"/>
+    <circle cx="250" cy="380" r="5"/>
+    <circle cx="290" cy="540" r="5"/>
+    <circle cx="380" cy="640" r="5"/>
+    <circle cx="460" cy="180" r="5"/>
+    <circle cx="1260" cy="110" r="5"/>
+    <circle cx="1320" cy="210" r="5"/>
+    <circle cx="1320" cy="680" r="5"/>
+    <circle cx="1240" cy="640" r="5"/>
+  </g>
+
+  <!-- Subtle horizontal tech lines -->
+  <g stroke="#93C5FD" stroke-opacity="0.10" filter="url(#blur)">
+    <path d="M0 150 H1600"/>
+    <path d="M0 450 H1600"/>
+    <path d="M0 760 H1600"/>
+  </g>
+</svg>

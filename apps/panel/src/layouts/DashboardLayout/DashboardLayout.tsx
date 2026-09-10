@@ -1,3 +1,4 @@
+import { NavLink } from "react-router-dom";
 import type { ReactNode } from "react";
 import "./DashboardLayout.css";
 import {
@@ -24,36 +25,52 @@ export default function DashboardLayout({
         </div>
 
         <nav className="sidebar-nav">
-          <a href="/">
-            <LayoutDashboard size={18} />
-            <span>Dashboard</span>
-          </a>
+  <NavLink
+  to="/"
+  className={({ isActive }) => (isActive ? "active" : "")}
+>
+  <LayoutDashboard size={18} />
+  <span>Dashboard</span>
+</NavLink>
 
-          <a href="#">
-            <Users size={18} />
-            <span>Users</span>
-          </a>
+  <NavLink
+  to="/users"
+  className={({ isActive }) => (isActive ? "active" : "")}
+>
+  <Users size={18} />
+  <span>Users</span>
+</NavLink>
 
-          <a href="#">
-            <FileText size={18} />
-            <span>Configs</span>
-          </a>
+  <NavLink to="/configs">
+    <FileText size={18} />
+    <span>Configs</span>
+  </NavLink>
 
-          <a href="#">
-            <Server size={18} />
-            <span>Backends</span>
-          </a>
+  <NavLink
+  to="/backends"
+  className={({ isActive }) => (isActive ? "active" : "")}
+>
+  <Server size={18} />
+  <span>Backends</span>
+</NavLink>
 
-          <a href="#">
-            <Network size={18} />
-            <span>Subscriptions</span>
-          </a>
+  <NavLink
+  to="/subscriptions"
+  className={({ isActive }) => (isActive ? "active" : "")}
+>
+  <Network size={18} />
+  <span>Subscriptions</span>
+</NavLink>
 
-          <a href="#">
-            <Settings size={18} />
-            <span>Settings</span>
-          </a>
-        </nav>
+  <NavLink
+  to="/settings"
+  className={({ isActive }) => (isActive ? "active" : "")}
+>
+  <Settings size={18} />
+  <span>Settings</span>
+</NavLink>
+
+</nav>
       </aside>
 
       <div className="main-area">
