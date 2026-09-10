@@ -426,7 +426,8 @@
       "empty": {
         "title": "No admins",
         "description": "Add an admin to help manage the panel."
-      }
+      },
+      "you": "You"
     }
   },
   "notFound": {
