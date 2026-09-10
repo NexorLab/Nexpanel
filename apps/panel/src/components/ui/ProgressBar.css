@@ -1,0 +1,27 @@
+.progress {
+  width: 100%;
+  background: var(--color-surface-3);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progress-fill {
+  border-radius: var(--radius-full);
+  transition: width var(--transition);
+}
+
+.progress-primary {
+  background: var(--color-primary);
+}
+
+.progress-success {
+  background: var(--color-success);
+}
+
+.progress-warning {
+  background: var(--color-warning);
+}
+
+.progress-danger {
+  background: var(--color-danger);
+}
