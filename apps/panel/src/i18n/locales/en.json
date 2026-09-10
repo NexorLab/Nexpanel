@@ -83,7 +83,12 @@
     },
     "activity": {
       "title": "Recent activity",
-      "empty": "No recent activity."
+      "empty": "No recent activity.",
+      "userCreated": "User \"{{name}}\" created",
+      "configsGenerated": "{{count}} configs generated for {{user}}",
+      "backendUpdated": "Backend \"{{name}}\" updated",
+      "subRotated": "Subscription \"{{name}}\" token rotated",
+      "userDisabled": "User \"{{name}}\" disabled"
     },
     "systemStatus": {
       "title": "System Status",
