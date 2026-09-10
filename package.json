@@ -8,7 +8,12 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev:panel": "npm run dev -w @nexpanel/panel",
+    "dev:api": "npm run dev -w @nexpanel/api",
+    "build": "npm run build -w @nexpanel/panel",
+    "typecheck": "npm run typecheck --if-present --workspaces",
+    "lint": "npm run lint --if-present --workspaces",
+    "test": "npm run test --if-present --workspaces"
   },
   "repository": {
     "type": "git",
