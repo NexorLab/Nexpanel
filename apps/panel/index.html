@@ -4,7 +4,29 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>panel</title>
+    <title>NexPanel</title>
+    <script>
+      // Prevent theme/language flash: apply persisted prefs before React boots.
+      (function () {
+        try {
+          var theme = localStorage.getItem("nexpanel.theme");
+          var dark =
+            theme === "dark" ||
+            ((theme === null || theme === "system") &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.dataset.theme = dark ? "dark" : "light";
+
+          var lang = localStorage.getItem("nexpanel.lang");
+          if (lang !== "fa" && lang !== "en") {
+            lang = "en";
+          }
+          document.documentElement.lang = lang;
+          document.documentElement.dir = lang === "fa" ? "rtl" : "ltr";
+        } catch (e) {
+          document.documentElement.dataset.theme = "light";
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
