@@ -1,3 +1,4 @@
-import { NEX_PANEL_VERSION } from "@nexpanel/core";
-
-console.log(`NexPanel API ${NEX_PANEL_VERSION}`);
+export { createApp, defaultApp, default } from "./app";
+export type { Env } from "./env";
+export { errorBody, jsonError, notImplemented } from "./errors";
+export type { ErrorCode } from "./errors";

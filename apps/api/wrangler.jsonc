@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "nexpanel-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "nexpanel-db",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "../../database/migrations"
+    }
+  ],
+  "vars": {
+    // Set PUBLIC_ORIGIN after first deploy, e.g. https://panel.example.com
+    // Secrets (JWT_SECRET) go in `wrangler secret put JWT_SECRET` — never here.
+  },
+  "observability": {
+    "enabled": true
+  }
+}
