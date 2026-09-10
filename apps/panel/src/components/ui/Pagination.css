@@ -42,9 +42,13 @@
   cursor: not-allowed;
 }
 
-/* ChevronLeft/Right are directional; mirror in RTL via logical order instead */
+/* ChevronLeft/Right are directional; mirror in RTL */
 .pagination-flip {
   display: block;
+}
+
+[dir="rtl"] .pagination-flip {
+  transform: scaleX(-1);
 }
 
 .pagination-page {
