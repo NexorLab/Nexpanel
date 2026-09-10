@@ -83,7 +83,12 @@
     },
     "activity": {
       "title": "فعالیت‌های اخیر",
-      "empty": "فعالیتی ثبت نشده است."
+      "empty": "فعالیتی ثبت نشده است.",
+      "userCreated": "کاربر «{{name}}» ایجاد شد",
+      "configsGenerated": "{{count}} کانفیگ برای {{user}} تولید شد",
+      "backendUpdated": "بک‌اند «{{name}}» به‌روزرسانی شد",
+      "subRotated": "توکن اشتراک «{{name}}» چرخش شد",
+      "userDisabled": "کاربر «{{name}}» غیرفعال شد"
     },
     "systemStatus": {
       "title": "وضعیت سیستم",
