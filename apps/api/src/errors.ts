@@ -21,6 +21,16 @@ export type ErrorCode =
   | "USERNAME_TAKEN"
   | "NAME_TAKEN"
   | "LAST_OWNER"
+  | "SETUP_ALREADY_DONE"
+  | "WRONG_PASSWORD"
+  | "INVALID_FRAGMENT_LENGTH"
+  | "INVALID_FRAGMENT_DELAY"
+  | "INVALID_FRAGMENT_SPLIT"
+  | "INVALID_PORTS"
+  | "INVALID_PING_INTERVAL"
+  | "INVALID_DOH_URL"
+  | "INVALID_ECH_SERVER_NAME"
+  | "FRAGMENT_ECH_CONFLICT"
   | "RATE_LIMITED"
   | "NOT_IMPLEMENTED"
   | "INTERNAL";
@@ -40,6 +50,19 @@ export function jsonError(
   message: string,
 ): Response {
   return c.json(errorBody(code, message), status);
+}
+
+/** Map an AppError status onto Hono's contentful status code union. */
+function toStatus(status: number): 400 | 401 | 403 | 404 | 409 | 429 | 500 | 501 {
+  const allowed = [400, 401, 403, 404, 409, 429, 500, 501] as const;
+  return (allowed as readonly number[]).includes(status)
+    ? (status as (typeof allowed)[number])
+    : 500;
+}
+
+/** Convert a thrown AppError into the standard envelope (app.onError). */
+export function appErrorResponse(c: Context, error: { code: string; status: number; message: string }): Response {
+  return c.json(errorBody(error.code as ErrorCode, error.message), toStatus(error.status));
 }
 
 /** Standard 501 placeholder used by every stubbed route in this phase. */
