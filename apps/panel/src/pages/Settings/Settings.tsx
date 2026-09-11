@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import {
   MoreVertical,
   Pencil,
@@ -19,47 +19,21 @@ import SegmentedControl from "../../components/ui/SegmentedControl";
 import Select from "../../components/ui/Select";
 import Table, { type TableColumn } from "../../components/ui/Table";
 import Tabs from "../../components/ui/Tabs";
+import NetworkTab from "./NetworkTab";
 import { useApi } from "../../hooks/useApi";
 import { getApi } from "../../lib/api";
+import { DEFAULT_SETTINGS } from "../../lib/settings";
 import { useFormat } from "../../lib/format";
 import { useToast } from "../../contexts/ToastContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
-import type { PanelAdmin } from "../../types/dto";
+import type { GeneralSettings, PanelAdmin, PanelSettings } from "../../types/dto";
 import "./Settings.css";
 
-type SettingsTab = "general" | "security" | "appearance" | "admins";
+type SettingsTab = "general" | "network" | "security" | "appearance" | "admins";
 
-interface GeneralForm {
-  panelName: string;
-  siteUrl: string;
-  subscriptionBaseUrl: string;
-  defaultLanguage: "en" | "fa";
-  defaultQuotaGb: number;
-  defaultExpiryDays: number;
-}
-
-const GENERAL_KEY = "nexpanel.settings.general";
-
-function readGeneral(): GeneralForm {
-  try {
-    const raw = localStorage.getItem(GENERAL_KEY);
-    if (raw) return { ...DEFAULT_GENERAL, ...(JSON.parse(raw) as GeneralForm) };
-  } catch {
-    // ignore malformed storage
-  }
-  return { ...DEFAULT_GENERAL };
-}
-
-const DEFAULT_GENERAL: GeneralForm = {
-  panelName: "NexPanel",
-  siteUrl: "https://panel.example.com",
-  subscriptionBaseUrl: "https://panel.example.com/sub",
-  defaultLanguage: "en",
-  defaultQuotaGb: 50,
-  defaultExpiryDays: 90,
-};
+const EMPTY_GENERAL: GeneralSettings = { ...DEFAULT_SETTINGS.general };
 
 interface PasswordForm {
   current: string;
@@ -89,8 +63,16 @@ export default function Settings() {
   const [tab, setTab] = useState<SettingsTab>("general");
 
   // ---- General ----
-  const [general, setGeneral] = useState<GeneralForm>(readGeneral);
+  const [general, setGeneral] = useState<GeneralSettings>(EMPTY_GENERAL);
   const [generalSaving, setGeneralSaving] = useState(false);
+  const { data: settingsData } = useApi<PanelSettings>(
+    () => getApi().getSettings(),
+    [],
+  );
+
+  useEffect(() => {
+    if (settingsData) setGeneral({ ...settingsData.general });
+  }, [settingsData]);
 
   // ---- Security ----
   const [password, setPassword] = useState<PasswordForm>(EMPTY_PASSWORD);
@@ -112,7 +94,7 @@ export default function Settings() {
   const [deletingAdmin, setDeletingAdmin] = useState<PanelAdmin | null>(null);
   const [adminBusy, setAdminBusy] = useState(false);
 
-  function setGeneralField<K extends keyof GeneralForm>(key: K, value: GeneralForm[K]) {
+  function setGeneralField<K extends keyof GeneralSettings>(key: K, value: GeneralSettings[K]) {
     setGeneral((current) => ({ ...current, [key]: value }));
   }
 
@@ -120,10 +102,11 @@ export default function Settings() {
     event.preventDefault();
     setGeneralSaving(true);
     try {
-      // Phase 7 will persist this via PATCH /settings; for now it is local.
-      localStorage.setItem(GENERAL_KEY, JSON.stringify(general));
-      await new Promise((resolve) => setTimeout(resolve, 250));
+      const result = await getApi().updateSettings({ general });
+      setGeneral({ ...result.general });
       toast.push({ type: "success", title: t("settings.general.saved") });
+    } catch {
+      toast.push({ type: "error", title: t("errors.unknown") });
     } finally {
       setGeneralSaving(false);
     }
@@ -326,6 +309,7 @@ export default function Settings() {
 
   const tabs = [
     { key: "general", label: t("settings.tabs.general") },
+    { key: "network", label: t("settings.tabs.network") },
     { key: "security", label: t("settings.tabs.security") },
     { key: "appearance", label: t("settings.tabs.appearance") },
     ...(isAdmin ? [{ key: "admins", label: t("settings.tabs.admins") }] : []),
@@ -355,6 +339,7 @@ export default function Settings() {
                 value={general.panelName}
                 onChange={(event) => setGeneralField("panelName", event.target.value)}
                 dir="auto"
+                disabled={!isAdmin}
               />
               <Input
                 label={t("settings.general.siteUrl")}
@@ -362,6 +347,7 @@ export default function Settings() {
                 onChange={(event) => setGeneralField("siteUrl", event.target.value)}
                 dir="ltr"
                 placeholder="https://panel.example.com"
+                disabled={!isAdmin}
               />
             </div>
 
@@ -373,6 +359,7 @@ export default function Settings() {
               }
               dir="ltr"
               placeholder="https://panel.example.com/sub"
+              disabled={!isAdmin}
             />
 
             <div className="settings-grid-2">
@@ -386,6 +373,7 @@ export default function Settings() {
                   { value: "en", label: "English" },
                   { value: "fa", label: "فارسی" },
                 ]}
+                disabled={!isAdmin}
               />
               <Input
                 label={t("settings.general.defaultQuota")}
@@ -397,6 +385,7 @@ export default function Settings() {
                   setGeneralField("defaultQuotaGb", Number(event.target.value))
                 }
                 dir="ltr"
+                disabled={!isAdmin}
               />
               <Input
                 label={t("settings.general.defaultExpiryDays")}
@@ -408,17 +397,22 @@ export default function Settings() {
                   setGeneralField("defaultExpiryDays", Number(event.target.value))
                 }
                 dir="ltr"
+                disabled={!isAdmin}
               />
             </div>
 
             <div className="settings-actions">
-              <Button type="submit" loading={generalSaving}>
-                {t("common.save")}
-              </Button>
+              {isAdmin && (
+                <Button type="submit" loading={generalSaving}>
+                  {t("common.save")}
+                </Button>
+              )}
             </div>
           </form>
         </Card>
       )}
+
+      {tab === "network" && <NetworkTab canEdit={isAdmin} />}
 
       {tab === "security" && (
         <div className="settings-stack">
