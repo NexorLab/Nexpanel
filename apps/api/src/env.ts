@@ -1,11 +1,9 @@
 /// <reference types="@cloudflare/workers-types" />
 
+import type { AdminRole } from "@nexpanel/core";
+
 /**
  * Environment bindings for the NexPanel Worker.
- *
- * Phase 7 skeleton: the D1 binding and JWT secret are declared here so the
- * shape of every handler is already final; only the implementations are
- * stubbed with 501 NOT_IMPLEMENTED.
  */
 export interface Env {
   /** D1 database binding (wrangler.jsonc → d1_databases). */
@@ -25,3 +23,17 @@ export interface Env {
 }
 
 export type EnvBinding = keyof Env;
+
+/** Verified request identity — set by requireAuth, read by requireRole. */
+export interface AuthState {
+  adminId: string;
+  username: string;
+  /** DB-authoritative role (the JWT role claim is not trusted). */
+  role: AdminRole;
+}
+
+/** Hono generic env: bindings from the runtime + typed context variables. */
+export type AppEnv = {
+  Bindings: Env;
+  Variables: { auth: AuthState | null };
+};

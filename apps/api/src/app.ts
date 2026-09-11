@@ -1,6 +1,7 @@
 import { Hono } from "hono";
-import type { Env } from "./env";
-import { errorBody } from "./errors";
+import { AppError } from "@nexpanel/core";
+import { type AppEnv, type Env } from "./env";
+import { appErrorResponse, errorBody } from "./errors";
 import { authRoutes } from "./routes/auth";
 import { userRoutes } from "./routes/users";
 import { backendRoutes } from "./routes/backends";
@@ -23,7 +24,7 @@ import { subRoutes } from "./routes/sub";
  * contract, so swapping in the real adapter changes no UI code.
  */
 export function createApp() {
-  const app = new Hono<{ Bindings: Env }>();
+  const app = new Hono<AppEnv>();
 
   // Request id for log correlation (real implementation adds uuid).
   app.use("*", async (c, next) => {
@@ -38,7 +39,7 @@ export function createApp() {
   app.route("/sub", subRoutes);
 
   // Authenticated panel API.
-  const v1 = new Hono<{ Bindings: Env }>();
+  const v1 = new Hono<AppEnv>();
   v1.route("/auth", authRoutes);
   v1.route("/users", userRoutes);
   v1.route("/backends", backendRoutes);
@@ -54,8 +55,13 @@ export function createApp() {
     c.json(errorBody("NOT_FOUND", `No route for ${c.req.method} ${c.req.path}.`), 404),
   );
 
-  // Uncaught errors → structured 500.
+  // Uncaught errors → structured response. AppError (and its
+  // ValidationError/ConflictError/NotFoundError subclasses) map onto the
+  // standard envelope with their own code/status; anything else is 500.
   app.onError((error, c) => {
+    if (error instanceof AppError) {
+      return appErrorResponse(c, error);
+    }
     console.error("unhandled error:", error);
     return c.json(errorBody("INTERNAL", "Unexpected server error."), 500);
   });
