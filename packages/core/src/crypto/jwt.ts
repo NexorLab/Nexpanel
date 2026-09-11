@@ -8,6 +8,9 @@ export interface JwtClaims {
   sub: string;
   /** Role claim — read by requireRole middleware. */
   role: "owner" | "admin" | "viewer";
+  /** Unique token id — two logins in the same second must not produce
+   *  identical tokens (sessions.token_hash is UNIQUE). */
+  jti: string;
   /** Issued at (unix seconds). */
   iat: number;
   /** Expiry (unix seconds). */
@@ -45,7 +48,7 @@ async function importKey(secret: string): Promise<CryptoKey> {
 }
 
 export async function signJwt(
-  claims: Omit<JwtClaims, "iat" | "exp"> & { ttlSeconds?: number },
+  claims: Omit<JwtClaims, "jti" | "iat" | "exp"> & { ttlSeconds?: number },
   secret: string,
 ): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
@@ -53,6 +56,7 @@ export async function signJwt(
   const payload: JwtClaims = {
     sub: claims.sub,
     role: claims.role,
+    jti: crypto.randomUUID(),
     iat: now,
     exp: now + ttl,
   };

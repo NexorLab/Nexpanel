@@ -6,6 +6,7 @@ import type {
   PanelAdmin,
   Subscription,
 } from "../domain/types";
+import type { AdminRole } from "../index";
 
 /**
  * Repository interfaces — the seam between the domain and storage.
@@ -82,10 +83,18 @@ export interface SubscriptionRepository {
   recordAccess(token: string): Promise<void>;
 }
 
+/**
+ * Admin row including the password hash. Internal to the auth flow —
+ * never serialize this directly to API responses.
+ */
+export type AdminWithHash = PanelAdmin & { passwordHash: string };
+
 export interface AdminRepository {
   list(): Promise<PanelAdmin[]>;
-  getById(id: string): Promise<PanelAdmin | null>;
-  getByUsername(username: string): Promise<PanelAdmin | null>;
+  /** Includes passwordHash — internal, never serialize directly. */
+  getById(id: string): Promise<AdminWithHash | null>;
+  /** Includes passwordHash — internal, never serialize directly. */
+  getByUsername(username: string): Promise<AdminWithHash | null>;
   create(
     admin: Omit<PanelAdmin, "createdAt" | "updatedAt"> & { passwordHash: string },
   ): Promise<PanelAdmin>;
@@ -94,7 +103,31 @@ export interface AdminRepository {
     patch: Partial<Omit<PanelAdmin, "id" | "createdAt">> & { passwordHash?: string },
   ): Promise<PanelAdmin>;
   delete(id: string): Promise<void>;
+  count(): Promise<number>;
   countOwnersExcluding(id: string): Promise<number>;
+}
+
+/**
+ * Bearer-token sessions. Rows are keyed by SHA-256(token) (UNIQUE), so
+ * logout revokes exactly the presented token and password change revokes
+ * everything belonging to the admin.
+ */
+export interface SessionRepository {
+  create(session: {
+    id: string;
+    adminId: string;
+    tokenHash: string;
+    expiresAt: number;
+    createdAt: number;
+  }): Promise<void>;
+  /** Single round-trip auth lookup: session row + owning admin. */
+  getAuthByTokenHash(tokenHash: string): Promise<{
+    expiresAt: number;
+    admin: { id: string; username: string; role: AdminRole; isActive: boolean };
+  } | null>;
+  deleteByTokenHash(tokenHash: string): Promise<void>;
+  deleteByAdmin(adminId: string): Promise<void>;
+  deleteExpired(now: number): Promise<void>;
 }
 
 export interface SettingsRepository {
@@ -125,5 +158,6 @@ export interface RepositoryBundle {
   subscriptions: SubscriptionRepository;
   admins: AdminRepository;
   settings: SettingsRepository;
+  sessions: SessionRepository;
   stats: StatsRepository;
 }
