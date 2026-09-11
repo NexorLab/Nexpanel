@@ -90,77 +90,28 @@ export interface PanelAdmin {
   updatedAt: number;
 }
 
-export type FragmentMode = "none" | "custom";
-export type FragmentPackets = "tlshello" | "hello-ice" | "1-3";
-export type TlsFingerprint =
-  | "chrome"
-  | "firefox"
-  | "safari"
-  | "ios"
-  | "android"
-  | "edge"
-  | "random";
+// Settings types are the shared domain — single source of truth in core
+// so the panel and the API can never drift.
+export type {
+  CustomCdnSettings,
+  DnsSettings,
+  EchSettings,
+  FragmentMode,
+  FragmentPackets,
+  FragmentSettings,
+  GeneralSettings,
+  NetworkSettings,
+  PanelSettings,
+  TlsFingerprint,
+} from "@nexpanel/core";
 
-export interface FragmentSettings {
-  mode: FragmentMode;
-  packets: FragmentPackets;
-  /** bytes per fragment */
-  lengthMin: number;
-  lengthMax: number;
-  /** ms between fragments */
-  delayMin: number;
-  delayMax: number;
-  /** 0 disables max-split (BPB parity) */
-  maxSplitMin: number;
-  maxSplitMax: number;
+export interface AuthStatus {
+  needsSetup: boolean;
 }
 
-/** Ignored while fragment.mode is "custom" — fragment takes precedence (BPB parity). */
-export interface EchSettings {
-  enabled: boolean;
-  serverName: string;
-}
-
-export interface CustomCdnSettings {
-  addrs: string[];
-  host: string;
-  sni: string;
-}
-
-export interface DnsSettings {
-  local: string;
-  antiSanction: string;
-  /** DoH endpoint; must start with https:// */
-  remote: string;
-  fakeDns: boolean;
-}
-
-export interface NetworkSettings {
-  fragment: FragmentSettings;
-  ech: EchSettings;
-  tcpFastOpen: boolean;
-  /** seconds; later used as the url-test interval */
-  bestPingInterval: number;
-  customCdn: CustomCdnSettings;
-  cleanIPs: string[];
-  proxyIPs: string[];
-  ports: number[];
-  fingerprint: TlsFingerprint;
-  dns: DnsSettings;
-}
-
-export interface GeneralSettings {
-  panelName: string;
-  siteUrl: string;
-  subscriptionBaseUrl: string;
-  defaultLanguage: "en" | "fa";
-  defaultQuotaGb: number;
-  defaultExpiryDays: number;
-}
-
-export interface PanelSettings {
-  general: GeneralSettings;
-  network: NetworkSettings;
+export interface LoginResult {
+  token: string;
+  admin: { id: string; username: string; role: AdminRole };
 }
 
 export interface StatsOverview {

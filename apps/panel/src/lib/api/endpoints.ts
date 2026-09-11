@@ -1,7 +1,9 @@
 import type {
+  AuthStatus,
   Backend,
   Config,
   ConfigUser,
+  LoginResult,
   Paginated,
   PanelAdmin,
   PanelSettings,
@@ -16,6 +18,20 @@ import type {
  */
 
 export interface ApiClient {
+  // auth
+  /** True while no admin exists — drives the first-run setup page. */
+  getAuthStatus(): Promise<AuthStatus>;
+  /** Create the first owner admin (only while getAuthStatus().needsSetup). */
+  setup(body: { username: string; password: string }): Promise<LoginResult>;
+  login(body: { username: string; password: string }): Promise<LoginResult>;
+  /** Revoke the current session's token. */
+  logout(): Promise<void>;
+  /** Errors: WRONG_PASSWORD | VALIDATION_ERROR */
+  changePassword(body: {
+    currentPassword: string;
+    newPassword: string;
+  }): Promise<void>;
+
   // stats
   getStats(): Promise<StatsOverview>;
 

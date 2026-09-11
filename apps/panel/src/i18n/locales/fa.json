@@ -57,7 +57,14 @@
     "submit": "ورود",
     "submitting": "در حال ورود...",
     "invalidCredentials": "نام کاربری یا رمز عبور اشتباه است.",
-    "demoHint": "حالت نمایشی: از admin / admin استفاده کنید"
+    "demoHint": "حالت نمایشی: از admin / admin استفاده کنید",
+    "setupTitle": "به نکس‌پنل خوش آمدید",
+    "setupSubtitle": "برای تکمیل راه‌اندازی، حساب اولین مدیر را بسازید.",
+    "confirmPassword": "تکرار رمز عبور",
+    "passwordMismatch": "رمزهای عبور یکسان نیستند.",
+    "setupSubmit": "ساخت مدیر و ورود",
+    "setupSubmitting": "در حال ساخت...",
+    "setupFailed": "ساخت حساب مدیر ناموفق بود. شرایط را بررسی کنید و دوباره تلاش کنید."
   },
   "dashboard": {
     "title": "داشبورد",

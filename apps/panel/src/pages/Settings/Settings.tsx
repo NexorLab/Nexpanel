@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   MoreVertical,
   Pencil,
@@ -56,9 +57,10 @@ const ROLES: PanelAdmin["role"][] = ["owner", "admin", "viewer"];
 export default function Settings() {
   const { t } = useLanguage();
   const toast = useToast();
-  const { isAdmin, isOwner, admin } = useAuth();
+  const { isAdmin, isOwner, admin, logout } = useAuth();
   const fmt = useFormat();
   const { theme, setTheme } = useTheme();
+  const navigate = useNavigate();
 
   const [tab, setTab] = useState<SettingsTab>("general");
 
@@ -125,13 +127,24 @@ export default function Settings() {
     setPasswordSaving(true);
     setPasswordError(null);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 350));
-      if (password.current !== "admin") {
-        setPasswordError(t("settings.security.passwordWrong"));
-        return;
-      }
+      await getApi().changePassword({
+        currentPassword: password.current,
+        newPassword: password.next,
+      });
       toast.push({ type: "success", title: t("settings.security.passwordChanged") });
       setPassword(EMPTY_PASSWORD);
+      // The backend revoked every session for this admin — re-login.
+      logout();
+      navigate("/login", { replace: true });
+    } catch (error) {
+      const code = error instanceof Error ? error.message : "";
+      if (code === "WRONG_PASSWORD") {
+        setPasswordError(t("settings.security.passwordWrong"));
+      } else if (code === "VALIDATION_ERROR") {
+        setPasswordError(t("settings.security.passwordTooShort"));
+      } else {
+        toast.push({ type: "error", title: t("errors.unknown") });
+      }
     } finally {
       setPasswordSaving(false);
     }

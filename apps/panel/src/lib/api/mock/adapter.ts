@@ -1,8 +1,10 @@
 import type { ApiClient } from "../endpoints";
 import type {
+  AuthStatus,
   Backend,
   Config,
   ConfigUser,
+  LoginResult,
   NetworkSettings,
   PanelAdmin,
   PanelSettings,
@@ -22,10 +24,23 @@ import {
 /**
  * In-memory implementation of ApiClient.
  * Simulates network latency and mirrors what the real backend will do,
- * including duplicate-name conflicts and pagination.
+ * including duplicate-name conflicts, pagination and auth codes.
  */
 
 const LATENCY_MS = 220;
+
+/** Mock accounts — matches the demo hint on the login page. */
+const MOCK_ACCOUNTS: Record<
+  string,
+  { password: string; id: string; role: "owner" | "viewer" }
+> = {
+  admin: { password: "admin", id: "admin-1", role: "owner" },
+  viewer: { password: "viewer", id: "viewer-1", role: "viewer" },
+};
+
+// First-run simulation: remove this key in devtools to see the setup
+// page again. Set by mock setup()/login() so a reload shows normal login.
+const SETUP_KEY = "nexpanel.setup.mock";
 
 function delay<T>(value: T): Promise<T> {
   return new Promise((resolve) =>
@@ -67,6 +82,14 @@ class NotFoundError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "NotFoundError";
+  }
+}
+
+/** Auth failures (UNAUTHORIZED, SETUP_ALREADY_DONE, WRONG_PASSWORD, …). */
+class AuthError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AuthError";
   }
 }
 
@@ -254,6 +277,70 @@ export function createMockAdapter(): ApiClient {
   }
 
   return {
+    // auth
+    async getAuthStatus(): Promise<AuthStatus> {
+      const needsSetup = localStorage.getItem(SETUP_KEY) !== "done";
+      return delay({ needsSetup });
+    },
+
+    async setup({ username, password }): Promise<LoginResult> {
+      if (localStorage.getItem(SETUP_KEY) === "done") {
+        throw new AuthError("SETUP_ALREADY_DONE");
+      }
+      const name = username.trim();
+      if (!/^[A-Za-z0-9._-]{3,32}$/.test(name) || password.length < 8) {
+        throw new Error("VALIDATION_ERROR");
+      }
+      // Replace a same-name seed admin case-insensitively, else append.
+      const existing = admins.find(
+        (admin) => admin.username.toLowerCase() === name.toLowerCase(),
+      );
+      const created: PanelAdmin = {
+        id: existing?.id ?? `admin-${crypto.randomUUID().slice(0, 8)}`,
+        username: name,
+        role: "owner",
+        isActive: true,
+        lastLoginAt: now(),
+        createdAt: existing?.createdAt ?? now(),
+        updatedAt: now(),
+      };
+      admins = existing
+        ? admins.map((admin) => (admin.id === existing.id ? created : admin))
+        : [...admins, created];
+      localStorage.setItem(SETUP_KEY, "done");
+      return delay({ token: "mock-token", admin: { ...created } });
+    },
+
+    async login({ username, password }): Promise<LoginResult> {
+      const account = MOCK_ACCOUNTS[username.trim().toLowerCase()];
+      if (!account || account.password !== password) {
+        throw new AuthError("UNAUTHORIZED");
+      }
+      localStorage.setItem(SETUP_KEY, "done");
+      return delay({
+        token: "mock-token",
+        admin: {
+          id: account.id,
+          username: username.trim(),
+          role: account.role,
+        },
+      });
+    },
+
+    async logout(): Promise<void> {
+      return delay(undefined);
+    },
+
+    async changePassword({ currentPassword, newPassword }): Promise<void> {
+      if (currentPassword !== "admin") {
+        throw new AuthError("WRONG_PASSWORD");
+      }
+      if (newPassword.length < 8) {
+        throw new Error("VALIDATION_ERROR");
+      }
+      return delay(undefined);
+    },
+
     async getStats(): Promise<StatsOverview> {
       return delay(buildSeedStats(users, backends, configs, subscriptions));
     },
