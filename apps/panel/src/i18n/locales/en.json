@@ -352,6 +352,7 @@
     "description": "Configure your NexPanel instance.",
     "tabs": {
       "general": "General",
+      "network": "Network",
       "security": "Security",
       "appearance": "Appearance",
       "admins": "Admins"
@@ -366,6 +367,63 @@
       "defaultExpiryDays": "Default expiry (days)",
       "defaultExpiryHint": "0 means no expiry",
       "saved": "Settings saved"
+    },
+    "network": {
+      "fragment": {
+        "title": "Fragment (TLS fragmentation)",
+        "description": "Splits TLS ClientHello packets to bypass DPI. An active fragment overrides ECH.",
+        "mode": "Mode",
+        "modeOff": "Off",
+        "modeCustom": "Custom",
+        "packets": "Packets",
+        "length": "Length range (bytes)",
+        "lengthHint": "Bytes per fragment, 20–1000",
+        "delay": "Delay range (ms)",
+        "delayHint": "Delay between fragments, 0–5000",
+        "maxSplit": "Max split count",
+        "maxSplitHint": "Maximum number of fragments, 0 disables"
+      },
+      "ech": {
+        "title": "ECH & TCP Fast Open",
+        "enable": "Enable ECH",
+        "serverName": "ECH server name",
+        "disabledByFragment": "Fragment is enabled — ECH is ignored.",
+        "tfo": "TCP Fast Open",
+        "tfoHint": "Cuts one round-trip from the connection handshake"
+      },
+      "ping": {
+        "title": "Connection tuning",
+        "bestInterval": "Best ping interval (seconds)",
+        "bestIntervalHint": "url-test interval; 10–3600 seconds",
+        "fingerprint": "TLS fingerprint"
+      },
+      "customCdn": {
+        "title": "Custom CDN",
+        "addrs": "Addresses (one per line)",
+        "host": "Host header",
+        "sni": "SNI"
+      },
+      "ips": {
+        "title": "IPs & ports",
+        "cleanIps": "Clean IPs (one per line)",
+        "proxyIps": "Proxy IPs (one per line)",
+        "ports": "Ports (comma separated)",
+        "portsInvalid": "Ports must be numbers between 1 and 65535"
+      },
+      "dns": {
+        "title": "DNS",
+        "local": "Local DNS",
+        "antiSanction": "Anti-sanction DNS",
+        "remote": "Remote DNS (DoH)",
+        "remotePlaceholder": "https://dns.google/dns-query",
+        "fakeDns": "Enable Fake DNS"
+      },
+      "errors": {
+        "validation": "Some network settings are invalid. Fix the highlighted fields.",
+        "conflict": "Fragment and ECH cannot be enabled together."
+      },
+      "readOnly": "You have read-only access to network settings.",
+      "saved": "Network settings saved"
     },
     "security": {
       "changePassword": "Change password",

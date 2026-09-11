@@ -38,7 +38,7 @@ settings (key/value, standalone)
 - **backends** — upstream proxy servers. Protocol/transport/security are CHECK-constrained to the exact unions in `@nexpanel/core`; Shadowsocks uses `method`, REALITY adds `reality_public_key`/`reality_short_id`. Unique `name`.
 - **configs** — one generated URI per user×backend, enforced by `UNIQUE(user_id, backend_id)`; generation is an upsert. `uri` is denormalized (rebuilt via `POST /configs/:id/rebuild` when user or backend data changes). Cascade-deleted with either parent.
 - **subscriptions** — shareable links. `token` is the only secret material in the table (unique, unguessable); rotating a token is an UPDATE, so old links die immediately. Cascade-deleted with the user.
-- **settings** — instance-level key/value store (panel name, URLs, defaults). Values are JSON-encoded scalars/objects; no schema migration needed for new settings.
+- **settings** — instance-level key/value store (panel name, URLs, defaults). Values are JSON-encoded scalars/objects; no schema migration needed for new settings. The `PanelSettings` DTO (`general` / `network` sections, see docs/api.md) maps to two rows here, one JSON blob per section.
 
 ## Portability notes
 

@@ -4,6 +4,7 @@ import type {
   ConfigUser,
   Paginated,
   PanelAdmin,
+  PanelSettings,
   StatsOverview,
   Subscription,
 } from "../../types/dto";
@@ -89,6 +90,13 @@ export interface ApiClient {
   ): Promise<Subscription>;
   deleteSubscription(id: string): Promise<void>;
   rotateSubscriptionToken(id: string): Promise<Subscription>;
+
+  // settings
+  getSettings(): Promise<PanelSettings>;
+  /** Section-level patch: only the provided sections are replaced. */
+  updateSettings(
+    body: Partial<Pick<PanelSettings, "general" | "network">>,
+  ): Promise<PanelSettings>;
 
   // admins
   listAdmins(): Promise<PanelAdmin[]>;

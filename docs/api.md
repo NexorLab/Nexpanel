@@ -86,9 +86,18 @@ DELETE /admins/:id → 204 | 409 LAST_OWNER   (cannot delete self / last owner)
 ## Settings
 
 ```
-GET   /settings           → 200 { key: value, ... }
-PATCH /settings { key: value, ... } → 200 { ... }   (owner-only)
+GET   /settings           → 200 PanelSettings { general: {...}, network: {...} }
+PATCH /settings { general?: {...}, network?: {...} }
+                          → 200 PanelSettings
+                          (owner & admin can edit; viewer read-only)
+                          422 VALIDATION_ERROR | 409 FRAGMENT_ECH_CONFLICT
 ```
+
+`network` covers the BPB-parity block: `fragment` (mode/packets/length/delay/maxSplit),
+`ech`, `tcpFastOpen`, `bestPingInterval`, `customCdn` (addrs/host/sni), `cleanIPs`,
+`proxyIPs`, `ports`, `fingerprint`, `dns` (local/antiSanction/remote/fakeDns).
+Fragment and ECH are mutually exclusive — fragment wins when `fragment.mode === "custom"`.
+
 
 ## Stats
 

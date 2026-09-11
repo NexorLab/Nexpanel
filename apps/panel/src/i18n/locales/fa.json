@@ -352,6 +352,7 @@
     "description": "پیکربندی نمونه نکس‌پنل خود.",
     "tabs": {
       "general": "عمومی",
+      "network": "شبکه",
       "security": "امنیت",
       "appearance": "ظاهر",
       "admins": "مدیران"
@@ -366,6 +367,63 @@
       "defaultExpiryDays": "انقضای پیش‌فرض (روز)",
       "defaultExpiryHint": "۰ یعنی بدون انقضا",
       "saved": "تنظیمات ذخیره شد"
+    },
+    "network": {
+      "fragment": {
+        "title": "فرگمنت (قطعه‌بندی TLS)",
+        "description": "بسته‌های ClientHello را قطعه‌قطعه می‌کند تا از DPI عبور کند. در صورت فعال بودن، فرگمنت بر ECH اولویت دارد.",
+        "mode": "حالت",
+        "modeOff": "خاموش",
+        "modeCustom": "سفارشی",
+        "packets": "الگوی بسته‌ها",
+        "length": "بازه طول (بایت)",
+        "lengthHint": "حجم هر قطعه، بین ۲۰ تا ۱۰۰۰",
+        "delay": "بازه تأخیر (میلی‌ثانیه)",
+        "delayHint": "تأخیر میان قطعات، بین ۰ تا ۵۰۰۰",
+        "maxSplit": "حداکثر تعداد قطعه",
+        "maxSplitHint": "بیشترین تعداد قطعه‌بندی، ۰ یعنی غیرفعال"
+      },
+      "ech": {
+        "title": "ECH و TCP Fast Open",
+        "enable": "فعال‌سازی ECH",
+        "serverName": "نام سرور ECH",
+        "disabledByFragment": "فرگمنت فعال است؛ ECH نادیده گرفته می‌شود.",
+        "tfo": "TCP Fast Open",
+        "tfoHint": "یک رفت‌وبرگشت از فرآیند برقراری اتصال کم می‌کند"
+      },
+      "ping": {
+        "title": "تنظیمات اتصال",
+        "bestInterval": "فاصله تست بهترین پینگ (ثانیه)",
+        "bestIntervalHint": "فاصله اجرای url-test؛ بین ۱۰ تا ۳۶۰۰ ثانیه",
+        "fingerprint": "اثر انگشت TLS"
+      },
+      "customCdn": {
+        "title": "CDN سفارشی",
+        "addrs": "آدرس‌ها (هر خط یک مورد)",
+        "host": "هدر Host",
+        "sni": "SNI"
+      },
+      "ips": {
+        "title": "آی‌پی‌ها و پورت‌ها",
+        "cleanIps": "آی‌پی‌های تمیز (هر خط یک مورد)",
+        "proxyIps": "آی‌پی‌های پراکسی (هر خط یک مورد)",
+        "ports": "پورت‌ها (با کاما جدا کنید)",
+        "portsInvalid": "پورت‌ها باید عددی بین ۱ تا ۶۵۵۳۵ باشند"
+      },
+      "dns": {
+        "title": "دی‌ان‌اس",
+        "local": "DNS داخلی",
+        "antiSanction": "DNS ضد تحریم",
+        "remote": "DNS خارجی (DoH)",
+        "remotePlaceholder": "https://dns.google/dns-query",
+        "fakeDns": "فعال‌سازی Fake DNS"
+      },
+      "errors": {
+        "validation": "بخش‌هایی از تنظیمات شبکه نامعتبر است. فیلدهای مشخص‌شده را اصلاح کنید.",
+        "conflict": "فرگمنت و ECH نمی‌توانند هم‌زمان فعال باشند."
+      },
+      "readOnly": "شما فقط دسترسی مشاهده به تنظیمات شبکه دارید.",
+      "saved": "تنظیمات شبکه ذخیره شد"
     },
     "security": {
       "changePassword": "تغییر رمز عبور",
