@@ -20,7 +20,7 @@ import type { ConfigUser } from "../src/types/dto";
 
 describe("login → dashboard data path", () => {
   it("admin/admin account exists in the login map", () => {
-    // Matches MOCK_ACCOUNTS in Login.tsx — keeps the demo hint honest.
+    // Matches MOCK_ACCOUNTS in the mock adapter — keeps the demo hint honest.
     const admin = seedAdmins.find((a) => a.username === "admin");
     expect(admin).toBeDefined();
     expect(admin?.role).toBe("owner");

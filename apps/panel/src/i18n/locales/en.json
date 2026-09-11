@@ -57,7 +57,14 @@
     "submit": "Sign in",
     "submitting": "Signing in...",
     "invalidCredentials": "Invalid username or password.",
-    "demoHint": "Demo mode: use admin / admin"
+    "demoHint": "Demo mode: use admin / admin",
+    "setupTitle": "Welcome to NexPanel",
+    "setupSubtitle": "Create the first administrator account to finish setup.",
+    "confirmPassword": "Confirm password",
+    "passwordMismatch": "Passwords do not match.",
+    "setupSubmit": "Create admin & sign in",
+    "setupSubmitting": "Creating...",
+    "setupFailed": "Could not create the admin account. Check the requirements and try again."
   },
   "dashboard": {
     "title": "Dashboard",
