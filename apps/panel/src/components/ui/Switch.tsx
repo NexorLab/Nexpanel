@@ -1,3 +1,5 @@
+import "./Switch.css";
+
 interface SwitchProps {
   checked: boolean;
   onChange: (checked: boolean) => void;

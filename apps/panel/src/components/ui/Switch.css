@@ -21,10 +21,19 @@
   transition: background-color var(--transition-fast);
   padding: 0;
   flex-shrink: 0;
+  appearance: none;
 }
 
 .switch-track.switch-on {
   background: var(--color-primary);
+}
+
+.switch-track.switch-on .switch-thumb {
+  transform: translateX(18px);
+}
+
+[dir="rtl"] .switch-track.switch-on .switch-thumb {
+  transform: translateX(-18px);
 }
 
 .switch-thumb {
@@ -37,19 +46,6 @@
   background: #fff;
   box-shadow: var(--shadow-xs);
   transition: transform var(--transition-fast);
-}
-
-[dir="rtl"] .switch-thumb {
-  inset-inline-start: auto;
-  inset-inline-end: 3px;
-}
-
-.switch-track.switch-on .switch-thumb {
-  transform: translateX(18px);
-}
-
-[dir="rtl"] .switch-track.switch-on .switch-thumb {
-  transform: translateX(-18px);
 }
 
 .switch-label {
