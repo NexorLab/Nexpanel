@@ -69,4 +69,6 @@ export * from "./domain/types";
 export * from "./protocols/uri";
 export * from "./crypto/passwords";
 export * from "./crypto/jwt";
+export * from "./crypto/hash";
+export * from "./settings";
 export * from "./storage/repository";
