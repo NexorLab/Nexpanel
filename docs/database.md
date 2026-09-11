@@ -33,7 +33,7 @@ settings (key/value, standalone)
 ## Tables
 
 - **admins** — panel operators. `password_hash` is PBKDF2-encoded (`pbkdf2$iterations$salt$hash`, see `packages/core/src/crypto/passwords.ts`). `role ∈ owner|admin|viewer`. Unique, case-insensitive `username`.
-- **sessions** — issued JWTs, keyed by SHA-256 token hash so logout/revocation works without storing the token itself. Cascade-deleted with the admin.
+- **sessions** — issued JWTs, keyed by SHA-256 token hash so logout/revocation works without storing the token itself. Cascade-deleted with the admin. Lifecycle (implemented in the auth phase): a row is inserted at login/setup with `expires_at` = the JWT `exp`; logout deletes the presented token's row; a password change deletes **all** of the admin's rows (every device re-logins); expired rows are swept opportunistically at login (no cron yet).
 - **users** — config *consumers* (not panel logins). `uuid` is the credential embedded in proxy URIs; `quota_bytes`/`used_bytes` power usage bars; `expiry_at` NULL = never; `ip_limit` 0 = unlimited.
 - **backends** — upstream proxy servers. Protocol/transport/security are CHECK-constrained to the exact unions in `@nexpanel/core`; Shadowsocks uses `method`, REALITY adds `reality_public_key`/`reality_short_id`. Unique `name`.
 - **configs** — one generated URI per user×backend, enforced by `UNIQUE(user_id, backend_id)`; generation is an upsert. `uri` is denormalized (rebuilt via `POST /configs/:id/rebuild` when user or backend data changes). Cascade-deleted with either parent.
