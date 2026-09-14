@@ -1,4 +1,5 @@
 import type { Backend, ConfigUser } from "../domain/types";
+import { encodeBase64 } from "../crypto/base64";
 
 /**
  * Protocol URI builders — shared by the mock adapter (frontend), the
@@ -8,6 +9,15 @@ import type { Backend, ConfigUser } from "../domain/types";
 
 function encodeFragment(name: string): string {
   return encodeURIComponent(name).replace(/'/g, "%27");
+}
+
+/**
+ * SIP002-style Shadowsocks key derived from the user's UUID. Shared
+ * with the subscription renderers so clash/sing-box output always
+ * matches the generated ss:// URI.
+ */
+export function shadowsocksPassword(user: ConfigUser): string {
+  return user.uuid.replace(/-/g, "").slice(0, 16);
 }
 
 function requireUuid(user: ConfigUser): string {
@@ -56,7 +66,9 @@ export function buildVmessUri(user: ConfigUser, backend: Backend): string {
     fp: backend.fingerprint ?? "",
     alpn: "",
   };
-  return `vmess://${btoa(JSON.stringify(json))}`;
+  // encodeBase64 (not plain btoa): the ps field carries user-chosen
+  // backend names, which may be non-ASCII.
+  return `vmess://${encodeBase64(JSON.stringify(json))}`;
 }
 
 export function buildTrojanUri(user: ConfigUser, backend: Backend): string {
@@ -75,7 +87,7 @@ export function buildTrojanUri(user: ConfigUser, backend: Backend): string {
 export function buildShadowsocksUri(user: ConfigUser, backend: Backend): string {
   // SIP002: ss://base64(method:password)@host:port#name
   const method = backend.method ?? "aes-256-gcm";
-  const password = user.uuid.replace(/-/g, "").slice(0, 16);
+  const password = shadowsocksPassword(user);
   const userinfo = btoa(`${method}:${password}`)
     .replace(/\+/g, "-")
     .replace(/\//g, "_")
