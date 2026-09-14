@@ -1,4 +1,4 @@
-import { createFakeD1 } from "./fake-d1";
+import { createSqliteD1 } from "./sqlite-d1";
 import { createApp } from "../src/app";
 import type { Env } from "../src/env";
 
@@ -8,7 +8,7 @@ export const TEST_SECRET = "test-secret-for-jwt-signing";
 export function makeTestEnv() {
   const app = createApp();
   const env = {
-    DB: createFakeD1() as unknown as Env["DB"],
+    DB: createSqliteD1() as unknown as Env["DB"],
     JWT_SECRET: TEST_SECRET,
   };
   return { app, env };

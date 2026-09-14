@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../src/app";
 import type { Env } from "../src/env";
-import { createFakeD1 } from "./fake-d1";
+import { createSqliteD1 } from "./sqlite-d1";
 import { bearer, setupOwner } from "./helpers";
 import { DEFAULT_SETTINGS } from "@nexpanel/core";
 
@@ -10,7 +10,7 @@ let env: { DB: Env["DB"]; JWT_SECRET: string };
 
 beforeEach(() => {
   app = createApp();
-  env = { DB: createFakeD1() as unknown as Env["DB"], JWT_SECRET: "test-secret-for-jwt-signing" };
+  env = { DB: createSqliteD1() as unknown as Env["DB"], JWT_SECRET: "test-secret-for-jwt-signing" };
 });
 
 function json(method: string, path: string, body: unknown, headers: Record<string, string> = {}) {
