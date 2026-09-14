@@ -23,6 +23,7 @@ export type ErrorCode =
   | "LAST_OWNER"
   | "SETUP_ALREADY_DONE"
   | "WRONG_PASSWORD"
+  | "BACKEND_UNREACHABLE"
   | "INVALID_FRAGMENT_LENGTH"
   | "INVALID_FRAGMENT_DELAY"
   | "INVALID_FRAGMENT_SPLIT"
@@ -45,7 +46,7 @@ export function errorBody(code: ErrorCode, message: string): ErrorBody {
 
 export function jsonError(
   c: Context,
-  status: 400 | 401 | 403 | 404 | 409 | 429 | 500 | 501,
+  status: 400 | 401 | 403 | 404 | 409 | 429 | 500 | 501 | 502,
   code: ErrorCode,
   message: string,
 ): Response {
@@ -53,8 +54,8 @@ export function jsonError(
 }
 
 /** Map an AppError status onto Hono's contentful status code union. */
-function toStatus(status: number): 400 | 401 | 403 | 404 | 409 | 429 | 500 | 501 {
-  const allowed = [400, 401, 403, 404, 409, 429, 500, 501] as const;
+function toStatus(status: number): 400 | 401 | 403 | 404 | 409 | 429 | 500 | 501 | 502 {
+  const allowed = [400, 401, 403, 404, 409, 429, 500, 501, 502] as const;
   return (allowed as readonly number[]).includes(status)
     ? (status as (typeof allowed)[number])
     : 500;
