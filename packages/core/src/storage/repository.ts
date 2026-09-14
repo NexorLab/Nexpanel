@@ -1,4 +1,5 @@
 import type {
+  ActivityEvent,
   Backend,
   Config,
   ConfigUser,
@@ -72,11 +73,10 @@ export interface SubscriptionRepository {
   create(
     subscription: Omit<Subscription, "createdAt" | "updatedAt">,
   ): Promise<Subscription>;
+  /** token is included for rotation (POST /:id/rotate-token). */
   update(
     id: string,
-    patch: Partial<
-      Omit<Subscription, "id" | "userId" | "token" | "createdAt">
-    >,
+    patch: Partial<Omit<Subscription, "id" | "userId" | "createdAt">>,
   ): Promise<Subscription>;
   delete(id: string): Promise<void>;
   deleteByUser(userId: string): Promise<void>;
@@ -150,6 +150,17 @@ export interface StatsRepository {
   }>;
 }
 
+/**
+ * Append-only dashboard feed. Events are semantic (i18n messageKey +
+ * params); the client renders them translated. The implementation keeps
+ * a bounded tail — the log is a feed, not an audit trail.
+ */
+export interface ActivityRepository {
+  record(event: ActivityEvent): Promise<void>;
+  /** Newest first. */
+  list(limit: number): Promise<ActivityEvent[]>;
+}
+
 /** Bundle handed to services via DI (env.DB in Workers, sqlite in Node). */
 export interface RepositoryBundle {
   users: UserRepository;
@@ -160,4 +171,5 @@ export interface RepositoryBundle {
   settings: SettingsRepository;
   sessions: SessionRepository;
   stats: StatsRepository;
+  activity: ActivityRepository;
 }

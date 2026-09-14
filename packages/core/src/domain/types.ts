@@ -93,3 +93,17 @@ export interface Paginated<T> {
     totalPages: number;
   };
 }
+
+/**
+ * Dashboard feed entry. The API stores semantic events; the client
+ * renders them translated (messageKey is an i18n key).
+ */
+export interface ActivityEvent {
+  id: string;
+  /** i18n key, e.g. "dashboard.activity.userCreated". */
+  messageKey: string;
+  /** Interpolation params for the message (JSON-encoded at rest). */
+  params: Record<string, string | number>;
+  /** Unix seconds. */
+  at: number;
+}
