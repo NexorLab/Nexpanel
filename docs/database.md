@@ -28,6 +28,7 @@ admins 1───∞ sessions
 users  1───∞ configs ∞───1 backends
 users  1───∞ subscriptions
 settings (key/value, standalone)
+activity_log (append-only feed, standalone)
 ```
 
 ## Tables
@@ -39,6 +40,7 @@ settings (key/value, standalone)
 - **configs** — one generated URI per user×backend, enforced by `UNIQUE(user_id, backend_id)`; generation is an upsert. `uri` is denormalized (rebuilt via `POST /configs/:id/rebuild` when user or backend data changes). Cascade-deleted with either parent.
 - **subscriptions** — shareable links. `token` is the only secret material in the table (unique, unguessable); rotating a token is an UPDATE, so old links die immediately. Cascade-deleted with the user.
 - **settings** — instance-level key/value store (panel name, URLs, defaults). Values are JSON-encoded scalars/objects; no schema migration needed for new settings. The `PanelSettings` DTO (`general` / `network` sections, see docs/api.md) maps to two rows here, one JSON blob per section.
+- **activity_log** (0002_activity.sql) — dashboard "recent activity" feed. Rows are semantic events: `message_key` is an i18n key rendered client-side and `params` is a JSON object of interpolation values, so the API never stores translated text. Append-only with a bounded tail — the repository prunes everything beyond the newest 200 rows on write.
 
 ## Portability notes
 

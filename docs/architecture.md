@@ -37,7 +37,7 @@ Browser (SPA)
    ▼
 Cloudflare Worker (apps/api, Hono)
    │
-   ├── D1 (SQLite)      users, backends, configs, subscriptions, admins
+   ├── D1 (SQLite)      users, backends, configs, subscriptions, admins, activity_log
    └── Worker secrets   JWT_SECRET (never in wrangler.jsonc)
 ```
 
