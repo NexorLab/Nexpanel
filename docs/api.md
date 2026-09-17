@@ -2,7 +2,7 @@
 
 Base URL: `/api/v1`. All bodies are JSON. Authentication (except `/sub/:token` and `/auth/login`) uses `Authorization: Bearer <JWT>`.
 
-**Status in this phase:** `auth`, `admins` and `settings` are implemented on D1. The remaining endpoint groups (`users`, `backends`, `configs`, `subscriptions`, `stats`, `/sub`) still respond `501` with `error.code = "NOT_IMPLEMENTED"`. The frontend mock adapter implements the identical contract against seed data.
+**Status in this phase:** every endpoint group below is implemented on D1 — `auth`, `admins`, `settings`, `users`, `backends`, `configs`, `subscriptions`, `stats` and the public `/sub/:token` delivery. Per-token rate limiting (`RATE_LIMITED`) is reserved for a later phase. The frontend mock adapter implements the identical contract against seed data.
 
 ## Error envelope
 
@@ -12,7 +12,7 @@ Every non-2xx response:
 { "error": { "code": "CONFLICT", "message": "Human-readable detail." } }
 ```
 
-Stable codes: `VALIDATION_ERROR` (400), `UNAUTHORIZED` (401), `FORBIDDEN` (403), `NOT_FOUND` (404), `CONFLICT`, `USERNAME_TAKEN`, `NAME_TAKEN`, `LAST_OWNER`, `SETUP_ALREADY_DONE` (409), `WRONG_PASSWORD` (400), settings codes below, `RATE_LIMITED` (429), `NOT_IMPLEMENTED` (501), `INTERNAL` (500).
+Stable codes: `VALIDATION_ERROR` (400), `UNAUTHORIZED` (401), `FORBIDDEN` (403), `NOT_FOUND` (404), `CONFLICT`, `USERNAME_TAKEN`, `NAME_TAKEN`, `LAST_OWNER`, `SETUP_ALREADY_DONE` (409), `WRONG_PASSWORD` (400), `BACKEND_UNREACHABLE` (502), settings codes below, `RATE_LIMITED` (429), `NOT_IMPLEMENTED` (501), `INTERNAL` (500).
 
 ## Health
 
@@ -83,7 +83,7 @@ POST   /configs/generate    { userId, backendIds } → 200 Config[]
 GET    /subscriptions?userId=       → 200 Subscription[]
 POST   /subscriptions { userId, name, format }
                   → 201 Subscription
-PATCH  /subscriptions/:id { name?, format?, expiresAt? } → 200 Subscription
+PATCH  /subscriptions/:id { name?, format?, expiresAt?, includeInactive? } → 200 Subscription
 DELETE /subscriptions/:id   → 204
 POST   /subscriptions/:id/rotate-token → 200 Subscription   (new token)
 ```
