@@ -1,0 +1,509 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "close": "Close",
+    "confirm": "Confirm",
+    "search": "Search",
+    "loading": "Loading...",
+    "actions": "Actions",
+    "status": "Status",
+    "all": "All",
+    "yes": "Yes",
+    "no": "No",
+    "copy": "Copy",
+    "copied": "Copied",
+    "download": "Download",
+    "retry": "Retry",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "page": "Page",
+    "of": "of",
+    "total": "Total",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "active": "Active",
+    "inactive": "Inactive",
+    "never": "Never",
+    "unlimited": "Unlimited",
+    "theme": "Theme",
+    "language": "Language",
+    "logout": "Log out",
+    "notAvailable": "—"
+  },
+  "app": {
+    "name": "NexPanel",
+    "tagline": "Proxy config management panel"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "users": "Users",
+    "configs": "Configs",
+    "backends": "Backends",
+    "subscriptions": "Subscriptions",
+    "settings": "Settings"
+  },
+  "login": {
+    "title": "Sign in to NexPanel",
+    "subtitle": "Enter your credentials to access the panel.",
+    "username": "Username",
+    "usernamePlaceholder": "Enter username",
+    "password": "Password",
+    "passwordPlaceholder": "Enter password",
+    "submit": "Sign in",
+    "submitting": "Signing in...",
+    "invalidCredentials": "Invalid username or password.",
+    "demoHint": "Demo mode: use admin / admin",
+    "setupTitle": "Welcome to NexPanel",
+    "setupSubtitle": "Create the first administrator account to finish setup.",
+    "confirmPassword": "Confirm password",
+    "passwordMismatch": "Passwords do not match.",
+    "setupSubmit": "Create admin & sign in",
+    "setupSubmitting": "Creating...",
+    "setupFailed": "Could not create the admin account. Check the requirements and try again."
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back to NexPanel.",
+    "stats": {
+      "users": "Users",
+      "usersDescription": "Total config users",
+      "configs": "Configs",
+      "configsDescription": "Generated configurations",
+      "backends": "Backends",
+      "backendsDescription": "Online / total backends",
+      "subscriptions": "Subscriptions",
+      "subscriptionsDescription": "Active subscriptions"
+    },
+    "charts": {
+      "configsPerDay": "Configs generated",
+      "last7Days": "Last 7 days",
+      "byProtocol": "Configs by protocol"
+    },
+    "backendStatus": {
+      "title": "Backend status",
+      "empty": "No backends configured yet."
+    },
+    "activity": {
+      "title": "Recent activity",
+      "empty": "No recent activity.",
+      "userCreated": "User \"{{name}}\" created",
+      "configsGenerated": "{{count}} configs generated for {{user}}",
+      "backendUpdated": "Backend \"{{name}}\" updated",
+      "subRotated": "Subscription \"{{name}}\" token rotated",
+      "userDisabled": "User \"{{name}}\" disabled"
+    },
+    "systemStatus": {
+      "title": "System Status",
+      "allOperational": "All NexPanel services are currently operational.",
+      "operational": "Operational"
+    }
+  },
+  "users": {
+    "title": "Users",
+    "description": "Manage config users and their access.",
+    "addUser": "Add User",
+    "editUser": "Edit User",
+    "searchPlaceholder": "Search users...",
+    "filterStatus": "Filter by status",
+    "table": {
+      "username": "Username",
+      "status": "Status",
+      "quota": "Quota",
+      "expiry": "Expiry",
+      "ipLimit": "IP Limit",
+      "configs": "Configs",
+      "created": "Created",
+      "actions": "Actions"
+    },
+    "status": {
+      "active": "Active",
+      "disabled": "Disabled",
+      "expired": "Expired",
+      "limited": "Limited"
+    },
+    "form": {
+      "username": "Username",
+      "usernameRequired": "Username is required",
+      "usernameTaken": "Username already exists",
+      "note": "Note",
+      "notePlaceholder": "Optional note about this user",
+      "sectionIdentity": "Identity",
+      "sectionLimits": "Limits",
+      "quotaBytes": "Quota (GB)",
+      "quotaHint": "0 means unlimited",
+      "expiryAt": "Expiry date",
+      "expiryHint": "Leave empty for no expiry",
+      "ipLimit": "IP limit",
+      "ipLimitHint": "0 means unlimited",
+      "enabled": "User enabled"
+    },
+    "actions": {
+      "edit": "Edit",
+      "resetUuid": "Reset UUID",
+      "copySubLink": "Copy subscription link",
+      "enable": "Enable",
+      "disable": "Disable",
+      "delete": "Delete"
+    },
+    "confirmDelete": {
+      "title": "Delete user",
+      "message": "Are you sure you want to delete \"{{name}}\"? Their configs and subscriptions will also be removed."
+    },
+    "toasts": {
+      "created": "User created",
+      "updated": "User updated",
+      "deleted": "User deleted",
+      "uuidReset": "UUID reset"
+    },
+    "empty": {
+      "title": "No users found",
+      "description": "Create your first user to start generating configs."
+    }
+  },
+  "backends": {
+    "title": "Backends",
+    "description": "Manage proxy servers that configs point to.",
+    "addBackend": "Add Backend",
+    "editBackend": "Edit Backend",
+    "card": {
+      "configs": "{{count}} config(s)",
+      "latency": "{{ms}} ms",
+      "transportSecurity": "Transport / Security"
+    },
+    "protocol": {
+      "vless": "VLESS",
+      "vmess": "VMess",
+      "trojan": "Trojan",
+      "shadowsocks": "Shadowsocks"
+    },
+    "transport": {
+      "tcp": "TCP",
+      "ws": "WebSocket",
+      "grpc": "gRPC",
+      "httpupgrade": "HTTPUpgrade",
+      "xhttp": "XHTTP"
+    },
+    "security": {
+      "none": "None",
+      "tls": "TLS",
+      "reality": "Reality"
+    },
+    "form": {
+      "name": "Name",
+      "nameRequired": "Name is required",
+      "nameTaken": "Name already exists",
+      "protocol": "Protocol",
+      "host": "Host",
+      "hostRequired": "Host is required",
+      "port": "Port",
+      "portInvalid": "Port must be between 1 and 65535",
+      "sectionTransport": "Transport",
+      "sectionSecurity": "Security",
+      "sectionCredentials": "Credentials",
+      "uuid": "UUID",
+      "password": "Password",
+      "method": "Encryption method",
+      "sni": "SNI",
+      "hostHeader": "Host header",
+      "path": "Path",
+      "serviceName": "Service name",
+      "fingerprint": "Fingerprint",
+      "realityPublicKey": "Reality public key",
+      "realityShortId": "Reality short ID",
+      "allowInsecure": "Allow insecure",
+      "enabled": "Backend enabled"
+    },
+    "actions": {
+      "edit": "Edit",
+      "test": "Test",
+      "enable": "Enable",
+      "disable": "Disable",
+      "delete": "Delete"
+    },
+    "confirmDelete": {
+      "title": "Delete backend",
+      "message": "Are you sure you want to delete \"{{name}}\"? All configs pointing to it will be removed."
+    },
+    "toasts": {
+      "created": "Backend created",
+      "updated": "Backend updated",
+      "deleted": "Backend deleted",
+      "tested": "Latency: {{ms}} ms"
+    },
+    "empty": {
+      "title": "No backends yet",
+      "description": "Add a backend server to start generating configs."
+    }
+  },
+  "configs": {
+    "title": "Configs",
+    "description": "Generated proxy configurations for your users.",
+    "generate": "Generate Configs",
+    "searchPlaceholder": "Search configs...",
+    "filterUser": "All users",
+    "filterBackend": "All backends",
+    "table": {
+      "name": "Name",
+      "protocol": "Protocol",
+      "user": "User",
+      "backend": "Backend",
+      "uri": "URI",
+      "created": "Created",
+      "actions": "Actions"
+    },
+    "generateModal": {
+      "title": "Generate configs",
+      "user": "User",
+      "userPlaceholder": "Select a user",
+      "backends": "Backends",
+      "selectAll": "Select all",
+      "noBackends": "No active backends available.",
+      "submit": "Generate",
+      "generating": "Generating...",
+      "results": "Generated configs",
+      "copyAll": "Copy all",
+      "downloadTxt": "Download .txt",
+      "done": "Done",
+      "noUserSelected": "Please select a user"
+    },
+    "qrModal": {
+      "title": "Config QR code",
+      "scanHint": "Scan with your proxy client to import this config."
+    },
+    "actions": {
+      "copyUri": "Copy URI",
+      "showQr": "QR code",
+      "rebuild": "Rebuild",
+      "delete": "Delete"
+    },
+    "confirmDelete": {
+      "title": "Delete config",
+      "message": "Are you sure you want to delete \"{{name}}\"?"
+    },
+    "toasts": {
+      "generated": "{{count}} config(s) generated",
+      "deleted": "Config deleted",
+      "rebuilt": "Config rebuilt"
+    },
+    "empty": {
+      "title": "No configs yet",
+      "description": "Generate configs for a user from active backends."
+    }
+  },
+  "subscriptions": {
+    "title": "Subscriptions",
+    "description": "Shareable links that deliver configs to clients.",
+    "create": "New Subscription",
+    "table": {
+      "user": "User",
+      "name": "Name",
+      "link": "Link",
+      "format": "Format",
+      "access": "Access",
+      "expires": "Expires",
+      "actions": "Actions"
+    },
+    "form": {
+      "title": "New subscription",
+      "editTitle": "Edit subscription",
+      "user": "User",
+      "userPlaceholder": "Select a user",
+      "name": "Name",
+      "namePlaceholder": "default",
+      "format": "Format",
+      "userRequired": "Please select a user"
+    },
+    "format": {
+      "base64": "Base64",
+      "plain": "Plain",
+      "clash": "Clash",
+      "singbox": "sing-box"
+    },
+    "info": {
+      "title": "How clients connect",
+      "description": "Share the subscription link with your user. Their proxy client fetches the link and imports all configs automatically."
+    },
+    "actions": {
+      "rotate": "Rotate token",
+      "edit": "Edit",
+      "delete": "Delete",
+      "reveal": "Reveal",
+      "hide": "Hide"
+    },
+    "confirmRotate": {
+      "title": "Rotate token",
+      "message": "Rotating invalidates the current link for \"{{name}}\". Clients using the old link will stop receiving updates. Continue?"
+    },
+    "confirmDelete": {
+      "title": "Delete subscription",
+      "message": "Are you sure you want to delete the subscription for \"{{name}}\"?"
+    },
+    "toasts": {
+      "created": "Subscription created",
+      "updated": "Subscription updated",
+      "deleted": "Subscription deleted",
+      "rotated": "Token rotated"
+    },
+    "empty": {
+      "title": "No subscriptions yet",
+      "description": "Create a subscription to share configs with a user."
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Configure your NexPanel instance.",
+    "tabs": {
+      "general": "General",
+      "network": "Network",
+      "security": "Security",
+      "appearance": "Appearance",
+      "admins": "Admins"
+    },
+    "general": {
+      "panelName": "Panel name",
+      "siteUrl": "Site URL",
+      "subscriptionBaseUrl": "Subscription base URL",
+      "defaultLanguage": "Default language",
+      "defaultQuota": "Default quota (GB)",
+      "defaultQuotaHint": "Applied to new users; 0 means unlimited",
+      "defaultExpiryDays": "Default expiry (days)",
+      "defaultExpiryHint": "0 means no expiry",
+      "saved": "Settings saved"
+    },
+    "network": {
+      "fragment": {
+        "title": "Fragment (TLS fragmentation)",
+        "description": "Splits TLS ClientHello packets to bypass DPI. An active fragment overrides ECH.",
+        "mode": "Mode",
+        "modeOff": "Off",
+        "modeCustom": "Custom",
+        "packets": "Packets",
+        "length": "Length range (bytes)",
+        "lengthHint": "Bytes per fragment, 20–1000",
+        "delay": "Delay range (ms)",
+        "delayHint": "Delay between fragments, 0–5000",
+        "maxSplit": "Max split count",
+        "maxSplitHint": "Maximum number of fragments, 0 disables"
+      },
+      "ech": {
+        "title": "ECH & TCP Fast Open",
+        "enable": "Enable ECH",
+        "serverName": "ECH server name",
+        "disabledByFragment": "Fragment is enabled — ECH is ignored.",
+        "tfo": "TCP Fast Open",
+        "tfoHint": "Cuts one round-trip from the connection handshake"
+      },
+      "ping": {
+        "title": "Connection tuning",
+        "bestInterval": "Best ping interval (seconds)",
+        "bestIntervalHint": "url-test interval; 10–3600 seconds",
+        "fingerprint": "TLS fingerprint"
+      },
+      "customCdn": {
+        "title": "Custom CDN",
+        "addrs": "Addresses (one per line)",
+        "host": "Host header",
+        "sni": "SNI"
+      },
+      "ips": {
+        "title": "IPs & ports",
+        "cleanIps": "Clean IPs (one per line)",
+        "proxyIps": "Proxy IPs (one per line)",
+        "ports": "Ports (comma separated)",
+        "portsInvalid": "Ports must be numbers between 1 and 65535"
+      },
+      "dns": {
+        "title": "DNS",
+        "local": "Local DNS",
+        "antiSanction": "Anti-sanction DNS",
+        "remote": "Remote DNS (DoH)",
+        "remotePlaceholder": "https://dns.google/dns-query",
+        "fakeDns": "Enable Fake DNS"
+      },
+      "errors": {
+        "validation": "Some network settings are invalid. Fix the highlighted fields.",
+        "conflict": "Fragment and ECH cannot be enabled together."
+      },
+      "readOnly": "You have read-only access to network settings.",
+      "saved": "Network settings saved"
+    },
+    "security": {
+      "changePassword": "Change password",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm new password",
+      "passwordMismatch": "Passwords do not match",
+      "passwordTooShort": "Password must be at least 8 characters",
+      "passwordWrong": "Current password is incorrect",
+      "passwordChanged": "Password changed",
+      "session": "Sessions",
+      "sessionTtl": "Session duration",
+      "hours": "hours",
+      "twofa": "Two-factor authentication",
+      "twofaSoon": "Coming soon"
+    },
+    "appearance": {
+      "theme": "Theme",
+      "themeLight": "Light",
+      "themeDark": "Dark",
+      "themeSystem": "System",
+      "language": "Language",
+      "compact": "Compact density",
+      "compactHint": "Tighter spacing across the panel"
+    },
+    "admins": {
+      "addAdmin": "Add Admin",
+      "editAdmin": "Edit Admin",
+      "table": {
+        "username": "Username",
+        "role": "Role",
+        "lastLogin": "Last login",
+        "active": "Active",
+        "actions": "Actions"
+      },
+      "role": {
+        "owner": "Owner",
+        "admin": "Admin",
+        "viewer": "Viewer"
+      },
+      "form": {
+        "username": "Username",
+        "usernameRequired": "Username is required",
+        "usernameTaken": "Username already exists",
+        "password": "Password",
+        "passwordRequired": "Password is required",
+        "role": "Role"
+      },
+      "confirmDelete": {
+        "title": "Delete admin",
+        "message": "Are you sure you want to delete admin \"{{name}}\"?"
+      },
+      "toasts": {
+        "created": "Admin created",
+        "updated": "Admin updated",
+        "deleted": "Admin deleted"
+      },
+      "empty": {
+        "title": "No admins",
+        "description": "Add an admin to help manage the panel."
+      },
+      "you": "You"
+    }
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you are looking for does not exist or has been moved.",
+    "goHome": "Go to dashboard"
+  },
+  "errors": {
+    "network": "Network error. Please try again.",
+    "unknown": "Something went wrong. Please try again.",
+    "unauthorized": "Your session has expired. Please sign in again.",
+    "forbidden": "You do not have permission to do that."
+  }
+}

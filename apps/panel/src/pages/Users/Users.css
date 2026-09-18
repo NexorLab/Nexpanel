@@ -1,134 +1,145 @@
 .users-page {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--space-6);
 }
 
 .users-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
 }
 
 .users-header h2 {
-  margin: 0 0 6px;
-  font-size: 28px;
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-3xl);
+  font-weight: var(--fw-bold);
 }
 
 .users-header p {
   margin: 0;
-  color: #6b7a99;
+  color: var(--color-text-secondary);
+  font-size: var(--text-md);
 }
 
-.add-user-button {
-  border: none;
-  border-radius: 8px;
-  background: #2563eb;
-  color: #fff;
-  padding: 10px 16px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.add-user-button:hover {
-  background: #1d4ed8;
-}
-
-.users-table-card {
-  overflow: hidden;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #fff;
-}
-
+/* Toolbar */
 .users-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px;
-  border-bottom: 1px solid #e2e8f0;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  flex-wrap: wrap;
 }
 
-.users-toolbar input {
+.users-search {
   width: 280px;
-  border: 1px solid #d7deea;
-  border-radius: 7px;
-  padding: 9px 12px;
-  font-size: 14px;
-  outline: none;
+  max-width: 100%;
 }
 
-.users-toolbar input:focus {
-  border-color: #2563eb;
+.users-status-filter {
+  width: 180px;
 }
 
-.users-table-wrapper {
-  overflow-x: auto;
+/* Cells */
+.user-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
-.users-table {
-  width: 100%;
-  border-collapse: collapse;
+.user-cell-name {
+  font-weight: var(--fw-semibold);
 }
 
-.users-table th,
-.users-table td {
-  padding: 14px 18px;
-  text-align: left;
-  border-bottom: 1px solid #edf1f7;
-}
-
-.users-table th {
-  background: #f8fafc;
-  color: #64748b;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.users-table td {
-  color: #172033;
-  font-size: 14px;
-}
-
-.users-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.users-table tbody tr:hover {
-  background: #f8fafc;
-}
-
-.user-status {
+.user-cell-uuid {
   display: inline-flex;
   align-items: center;
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 12px;
-  font-weight: 600;
+  gap: 6px;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
 }
 
-.user-status-active {
-  background: #dcfce7;
-  color: #15803d;
+.user-cell-copy {
+  padding: 2px 4px;
 }
 
-.user-status-disabled {
-  background: #f1f5f9;
-  color: #64748b;
+.quota-cell {
+  min-width: 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.action-button {
-  border: 1px solid #d7deea;
-  border-radius: 6px;
-  background: #fff;
-  color: #334155;
-  padding: 6px 11px;
-  font-size: 13px;
+.quota-cell-text {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.cell-muted {
+  color: var(--color-text-muted);
+}
+
+.cell-numeric {
+  font-variant-numeric: tabular-nums;
+}
+
+.cell-danger {
+  color: var(--color-danger-text);
+  font-weight: var(--fw-medium);
+}
+
+.row-menu-button {
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  display: grid;
+  place-items: center;
   cursor: pointer;
 }
 
-.action-button:hover {
-  background: #f8fafc;
-  border-color: #c5cfdf;
+.row-menu-button:hover {
+  background: var(--color-surface-3);
+  color: var(--color-text);
+}
+
+/* Form */
+.user-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.form-section-title {
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: var(--space-2);
+}
+
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+@media (max-width: 640px) {
+  .form-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .users-search,
+  .users-status-filter {
+    width: 100%;
+  }
 }

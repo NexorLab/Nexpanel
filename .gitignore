@@ -5,3 +5,18 @@ dist/
 !.env.example
 *.log
 .DS_Store
+
+# cloudflare / wrangler
+.wrangler/
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+
+# vite
+.vite/
+
+# testing
+coverage/
+
+# typescript
+*.tsbuildinfo

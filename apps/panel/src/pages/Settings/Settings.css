@@ -1,0 +1,199 @@
+.settings-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.settings-header h2 {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-3xl);
+  font-weight: var(--fw-bold);
+}
+
+.settings-header p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-md);
+}
+
+.settings-card {
+  display: block;
+}
+
+.settings-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.settings-card-title {
+  margin: 0 0 var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-lg);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text);
+}
+
+.settings-card-title svg {
+  color: var(--color-primary);
+}
+
+.settings-card-subtitle {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: var(--fw-medium);
+}
+
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.settings-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
+  margin-top: var(--space-2);
+  padding-top: var(--space-4);
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.settings-field-label {
+  font-size: var(--text-sm);
+  font-weight: var(--fw-medium);
+  color: var(--color-text-secondary);
+}
+
+.settings-field-hint-inline {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.settings-soon-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+/* Network tab */
+.settings-textarea {
+  width: 100%;
+  min-height: 84px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  font-family: var(--font-mono, monospace);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  resize: vertical;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.settings-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
+}
+
+.settings-textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.settings-network-error {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-md);
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
+  font-size: var(--text-sm);
+}
+
+/* Admins tab */
+.settings-admins-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.settings-admins-toolbar .settings-card-title {
+  margin: 0;
+}
+
+.settings-admin-user {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.settings-admin-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+  color: #fff;
+  background: linear-gradient(135deg, var(--brand-500), var(--brand-700));
+  flex-shrink: 0;
+}
+
+.settings-admin-name {
+  font-weight: var(--fw-medium);
+}
+
+.settings-muted {
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
+.row-menu-button {
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.row-menu-button:hover {
+  background: var(--color-surface-3);
+  color: var(--color-text);
+}
+
+@media (max-width: 720px) {
+  .settings-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}

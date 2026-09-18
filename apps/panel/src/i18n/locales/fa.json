@@ -1,0 +1,509 @@
+{
+  "common": {
+    "save": "ذخیره",
+    "cancel": "لغو",
+    "delete": "حذف",
+    "edit": "ویرایش",
+    "create": "ایجاد",
+    "close": "بستن",
+    "confirm": "تأیید",
+    "search": "جستجو",
+    "loading": "در حال بارگذاری...",
+    "actions": "عملیات",
+    "status": "وضعیت",
+    "all": "همه",
+    "yes": "بله",
+    "no": "خیر",
+    "copy": "کپی",
+    "copied": "کپی شد",
+    "download": "دانلود",
+    "retry": "تلاش دوباره",
+    "back": "بازگشت",
+    "next": "بعدی",
+    "previous": "قبلی",
+    "page": "صفحه",
+    "of": "از",
+    "total": "مجموع",
+    "enabled": "فعال",
+    "disabled": "غیرفعال",
+    "active": "فعال",
+    "inactive": "غیرفعال",
+    "never": "هرگز",
+    "unlimited": "نامحدود",
+    "theme": "تم",
+    "language": "زبان",
+    "logout": "خروج",
+    "notAvailable": "—"
+  },
+  "app": {
+    "name": "نکس‌پنل",
+    "tagline": "پنل مدیریت کانفیگ پروکسی"
+  },
+  "nav": {
+    "dashboard": "داشبورد",
+    "users": "کاربران",
+    "configs": "کانفیگ‌ها",
+    "backends": "بک‌اندها",
+    "subscriptions": "اشتراک‌ها",
+    "settings": "تنظیمات"
+  },
+  "login": {
+    "title": "ورود به نکس‌پنل",
+    "subtitle": "برای دسترسی به پنل، اطلاعات ورود خود را وارد کنید.",
+    "username": "نام کاربری",
+    "usernamePlaceholder": "نام کاربری را وارد کنید",
+    "password": "رمز عبور",
+    "passwordPlaceholder": "رمز عبور را وارد کنید",
+    "submit": "ورود",
+    "submitting": "در حال ورود...",
+    "invalidCredentials": "نام کاربری یا رمز عبور اشتباه است.",
+    "demoHint": "حالت نمایشی: از admin / admin استفاده کنید",
+    "setupTitle": "به نکس‌پنل خوش آمدید",
+    "setupSubtitle": "برای تکمیل راه‌اندازی، حساب اولین مدیر را بسازید.",
+    "confirmPassword": "تکرار رمز عبور",
+    "passwordMismatch": "رمزهای عبور یکسان نیستند.",
+    "setupSubmit": "ساخت مدیر و ورود",
+    "setupSubmitting": "در حال ساخت...",
+    "setupFailed": "ساخت حساب مدیر ناموفق بود. شرایط را بررسی کنید و دوباره تلاش کنید."
+  },
+  "dashboard": {
+    "title": "داشبورد",
+    "welcome": "به نکس‌پنل خوش آمدید.",
+    "stats": {
+      "users": "کاربران",
+      "usersDescription": "مجموع کاربران کانفیگ",
+      "configs": "کانفیگ‌ها",
+      "configsDescription": "کانفیگ‌های تولیدشده",
+      "backends": "بک‌اندها",
+      "backendsDescription": "آنلاین از کل بک‌اندها",
+      "subscriptions": "اشتراک‌ها",
+      "subscriptionsDescription": "اشتراک‌های فعال"
+    },
+    "charts": {
+      "configsPerDay": "کانفیگ‌های تولیدشده",
+      "last7Days": "۷ روز گذشته",
+      "byProtocol": "کانفیگ‌ها بر اساس پروتکل"
+    },
+    "backendStatus": {
+      "title": "وضعیت بک‌اندها",
+      "empty": "هنوز بک‌اندی پیکربندی نشده است."
+    },
+    "activity": {
+      "title": "فعالیت‌های اخیر",
+      "empty": "فعالیتی ثبت نشده است.",
+      "userCreated": "کاربر «{{name}}» ایجاد شد",
+      "configsGenerated": "{{count}} کانفیگ برای {{user}} تولید شد",
+      "backendUpdated": "بک‌اند «{{name}}» به‌روزرسانی شد",
+      "subRotated": "توکن اشتراک «{{name}}» چرخش شد",
+      "userDisabled": "کاربر «{{name}}» غیرفعال شد"
+    },
+    "systemStatus": {
+      "title": "وضعیت سیستم",
+      "allOperational": "همه سرویس‌های نکس‌پنل در حال حاضر سالم هستند.",
+      "operational": "سالم"
+    }
+  },
+  "users": {
+    "title": "کاربران",
+    "description": "مدیریت کاربران کانفیگ و دسترسی آن‌ها.",
+    "addUser": "افزودن کاربر",
+    "editUser": "ویرایش کاربر",
+    "searchPlaceholder": "جستجوی کاربران...",
+    "filterStatus": "فیلتر بر اساس وضعیت",
+    "table": {
+      "username": "نام کاربری",
+      "status": "وضعیت",
+      "quota": "حجم",
+      "expiry": "انقضا",
+      "ipLimit": "محدودیت IP",
+      "configs": "کانفیگ‌ها",
+      "created": "تاریخ ایجاد",
+      "actions": "عملیات"
+    },
+    "status": {
+      "active": "فعال",
+      "disabled": "غیرفعال",
+      "expired": "منقضی",
+      "limited": "محدودشده"
+    },
+    "form": {
+      "username": "نام کاربری",
+      "usernameRequired": "نام کاربری الزامی است",
+      "usernameTaken": "این نام کاربری قبلاً استفاده شده است",
+      "note": "یادداشت",
+      "notePlaceholder": "یادداشت اختیاری درباره این کاربر",
+      "sectionIdentity": "مشخصات",
+      "sectionLimits": "محدودیت‌ها",
+      "quotaBytes": "حجم (گیگابایت)",
+      "quotaHint": "۰ یعنی نامحدود",
+      "expiryAt": "تاریخ انقضا",
+      "expiryHint": "برای بدون انقضا خالی بگذارید",
+      "ipLimit": "محدودیت IP",
+      "ipLimitHint": "۰ یعنی نامحدود",
+      "enabled": "کاربر فعال باشد"
+    },
+    "actions": {
+      "edit": "ویرایش",
+      "resetUuid": "بازنشانی UUID",
+      "copySubLink": "کپی لینک اشتراک",
+      "enable": "فعال‌سازی",
+      "disable": "غیرفعال‌سازی",
+      "delete": "حذف"
+    },
+    "confirmDelete": {
+      "title": "حذف کاربر",
+      "message": "آیا از حذف «{{name}}» مطمئن هستید؟ کانفیگ‌ها و اشتراک‌های او هم حذف خواهند شد."
+    },
+    "toasts": {
+      "created": "کاربر ایجاد شد",
+      "updated": "کاربر به‌روزرسانی شد",
+      "deleted": "کاربر حذف شد",
+      "uuidReset": "UUID بازنشانی شد"
+    },
+    "empty": {
+      "title": "کاربری یافت نشد",
+      "description": "برای شروع تولید کانفیگ، اولین کاربر را ایجاد کنید."
+    }
+  },
+  "backends": {
+    "title": "بک‌اندها",
+    "description": "مدیریت سرورهای پروکسی که کانفیگ‌ها به آن‌ها متصل می‌شوند.",
+    "addBackend": "افزودن بک‌اند",
+    "editBackend": "ویرایش بک‌اند",
+    "card": {
+      "configs": "{{count}} کانفیگ",
+      "latency": "{{ms}} میلی‌ثانیه",
+      "transportSecurity": "ترنسپورت / امنیت"
+    },
+    "protocol": {
+      "vless": "VLESS",
+      "vmess": "VMess",
+      "trojan": "Trojan",
+      "shadowsocks": "Shadowsocks"
+    },
+    "transport": {
+      "tcp": "TCP",
+      "ws": "WebSocket",
+      "grpc": "gRPC",
+      "httpupgrade": "HTTPUpgrade",
+      "xhttp": "XHTTP"
+    },
+    "security": {
+      "none": "بدون رمزنگاری",
+      "tls": "TLS",
+      "reality": "Reality"
+    },
+    "form": {
+      "name": "نام",
+      "nameRequired": "نام الزامی است",
+      "nameTaken": "این نام قبلاً استفاده شده است",
+      "protocol": "پروتکل",
+      "host": "هاست",
+      "hostRequired": "هاست الزامی است",
+      "port": "پورت",
+      "portInvalid": "پورت باید بین ۱ تا ۶۵۵۳۵ باشد",
+      "sectionTransport": "ترنسپورت",
+      "sectionSecurity": "امنیت",
+      "sectionCredentials": "اعتبارنامه",
+      "uuid": "UUID",
+      "password": "رمز عبور",
+      "method": "روش رمزنگاری",
+      "sni": "SNI",
+      "hostHeader": "هدر Host",
+      "path": "مسیر (Path)",
+      "serviceName": "نام سرویس (gRPC)",
+      "fingerprint": "اثر انگشت (Fingerprint)",
+      "realityPublicKey": "کلید عمومی Reality",
+      "realityShortId": "شناسه کوتاه Reality",
+      "allowInsecure": "اجازه اتصال ناامن",
+      "enabled": "بک‌اند فعال باشد"
+    },
+    "actions": {
+      "edit": "ویرایش",
+      "test": "تست",
+      "enable": "فعال‌سازی",
+      "disable": "غیرفعال‌سازی",
+      "delete": "حذف"
+    },
+    "confirmDelete": {
+      "title": "حذف بک‌اند",
+      "message": "آیا از حذف «{{name}}» مطمئن هستید؟ همه کانفیگ‌های متصل به آن حذف خواهند شد."
+    },
+    "toasts": {
+      "created": "بک‌اند ایجاد شد",
+      "updated": "بک‌اند به‌روزرسانی شد",
+      "deleted": "بک‌اند حذف شد",
+      "tested": "تأخیر: {{ms}} میلی‌ثانیه"
+    },
+    "empty": {
+      "title": "هنوز بک‌اندی نیست",
+      "description": "برای شروع تولید کانفیگ، یک سرور بک‌اند اضافه کنید."
+    }
+  },
+  "configs": {
+    "title": "کانفیگ‌ها",
+    "description": "کانفیگ‌های پروکسی تولیدشده برای کاربران.",
+    "generate": "تولید کانفیگ",
+    "searchPlaceholder": "جستجوی کانفیگ‌ها...",
+    "filterUser": "همه کاربران",
+    "filterBackend": "همه بک‌اندها",
+    "table": {
+      "name": "نام",
+      "protocol": "پروتکل",
+      "user": "کاربر",
+      "backend": "بک‌اند",
+      "uri": "URI",
+      "created": "تاریخ ایجاد",
+      "actions": "عملیات"
+    },
+    "generateModal": {
+      "title": "تولید کانفیگ",
+      "user": "کاربر",
+      "userPlaceholder": "یک کاربر انتخاب کنید",
+      "backends": "بک‌اندها",
+      "selectAll": "انتخاب همه",
+      "noBackends": "هیچ بک‌اند فعالی موجود نیست.",
+      "submit": "تولید",
+      "generating": "در حال تولید...",
+      "results": "کانفیگ‌های تولیدشده",
+      "copyAll": "کپی همه",
+      "downloadTxt": "دانلود .txt",
+      "done": "پایان",
+      "noUserSelected": "لطفاً یک کاربر انتخاب کنید"
+    },
+    "qrModal": {
+      "title": "کد QR کانفیگ",
+      "scanHint": "برای واردکردن این کانفیگ، با کلاینت پروکسی خود اسکن کنید."
+    },
+    "actions": {
+      "copyUri": "کپی URI",
+      "showQr": "کد QR",
+      "rebuild": "بازسازی",
+      "delete": "حذف"
+    },
+    "confirmDelete": {
+      "title": "حذف کانفیگ",
+      "message": "آیا از حذف «{{name}}» مطمئن هستید؟"
+    },
+    "toasts": {
+      "generated": "{{count}} کانفیگ تولید شد",
+      "deleted": "کانفیگ حذف شد",
+      "rebuilt": "کانفیگ بازسازی شد"
+    },
+    "empty": {
+      "title": "هنوز کانفیگی نیست",
+      "description": "برای یک کاربر از بک‌اندهای فعال، کانفیگ تولید کنید."
+    }
+  },
+  "subscriptions": {
+    "title": "اشتراک‌ها",
+    "description": "لینک‌های قابل اشتراک که کانفیگ‌ها را به کلاینت‌ها می‌رسانند.",
+    "create": "اشتراک جدید",
+    "table": {
+      "user": "کاربر",
+      "name": "نام",
+      "link": "لینک",
+      "format": "قالب",
+      "access": "دسترسی",
+      "expires": "انقضا",
+      "actions": "عملیات"
+    },
+    "form": {
+      "title": "اشتراک جدید",
+      "editTitle": "ویرایش اشتراک",
+      "user": "کاربر",
+      "userPlaceholder": "یک کاربر انتخاب کنید",
+      "name": "نام",
+      "namePlaceholder": "default",
+      "format": "قالب",
+      "userRequired": "لطفاً یک کاربر انتخاب کنید"
+    },
+    "format": {
+      "base64": "Base64",
+      "plain": "متن ساده",
+      "clash": "Clash",
+      "singbox": "sing-box"
+    },
+    "info": {
+      "title": "اتصال کلاینت‌ها چگونه است؟",
+      "description": "لینک اشتراک را با کاربر خود به اشتراک بگذارید. کلاینت پروکسی او لینک را دریافت کرده و همه کانفیگ‌ها را به‌صورت خودکار وارد می‌کند."
+    },
+    "actions": {
+      "rotate": "چرخش توکن",
+      "edit": "ویرایش",
+      "delete": "حذف",
+      "reveal": "نمایش",
+      "hide": "پنهان"
+    },
+    "confirmRotate": {
+      "title": "چرخش توکن",
+      "message": "با چرخش توکن، لینک فعلی «{{name}}» باطل می‌شود. کلاینت‌هایی که از لینک قبلی استفاده می‌کنند دیگر به‌روزرسانی دریافت نمی‌کنند. ادامه می‌دهید؟"
+    },
+    "confirmDelete": {
+      "title": "حذف اشتراک",
+      "message": "آیا از حذف اشتراک «{{name}}» مطمئن هستید؟"
+    },
+    "toasts": {
+      "created": "اشتراک ایجاد شد",
+      "updated": "اشتراک به‌روزرسانی شد",
+      "deleted": "اشتراک حذف شد",
+      "rotated": "توکن چرخش شد"
+    },
+    "empty": {
+      "title": "هنوز اشتراکی نیست",
+      "description": "برای به اشتراک‌گذاشتن کانفیگ‌ها با یک کاربر، اشتراک بسازید."
+    }
+  },
+  "settings": {
+    "title": "تنظیمات",
+    "description": "پیکربندی نمونه نکس‌پنل خود.",
+    "tabs": {
+      "general": "عمومی",
+      "network": "شبکه",
+      "security": "امنیت",
+      "appearance": "ظاهر",
+      "admins": "مدیران"
+    },
+    "general": {
+      "panelName": "نام پنل",
+      "siteUrl": "آدرس سایت",
+      "subscriptionBaseUrl": "آدرس پایه اشتراک‌ها",
+      "defaultLanguage": "زبان پیش‌فرض",
+      "defaultQuota": "حجم پیش‌فرض (گیگابایت)",
+      "defaultQuotaHint": "برای کاربران جدید اعمال می‌شود؛ ۰ یعنی نامحدود",
+      "defaultExpiryDays": "انقضای پیش‌فرض (روز)",
+      "defaultExpiryHint": "۰ یعنی بدون انقضا",
+      "saved": "تنظیمات ذخیره شد"
+    },
+    "network": {
+      "fragment": {
+        "title": "فرگمنت (قطعه‌بندی TLS)",
+        "description": "بسته‌های ClientHello را قطعه‌قطعه می‌کند تا از DPI عبور کند. در صورت فعال بودن، فرگمنت بر ECH اولویت دارد.",
+        "mode": "حالت",
+        "modeOff": "خاموش",
+        "modeCustom": "سفارشی",
+        "packets": "الگوی بسته‌ها",
+        "length": "بازه طول (بایت)",
+        "lengthHint": "حجم هر قطعه، بین ۲۰ تا ۱۰۰۰",
+        "delay": "بازه تأخیر (میلی‌ثانیه)",
+        "delayHint": "تأخیر میان قطعات، بین ۰ تا ۵۰۰۰",
+        "maxSplit": "حداکثر تعداد قطعه",
+        "maxSplitHint": "بیشترین تعداد قطعه‌بندی، ۰ یعنی غیرفعال"
+      },
+      "ech": {
+        "title": "ECH و TCP Fast Open",
+        "enable": "فعال‌سازی ECH",
+        "serverName": "نام سرور ECH",
+        "disabledByFragment": "فرگمنت فعال است؛ ECH نادیده گرفته می‌شود.",
+        "tfo": "TCP Fast Open",
+        "tfoHint": "یک رفت‌وبرگشت از فرآیند برقراری اتصال کم می‌کند"
+      },
+      "ping": {
+        "title": "تنظیمات اتصال",
+        "bestInterval": "فاصله تست بهترین پینگ (ثانیه)",
+        "bestIntervalHint": "فاصله اجرای url-test؛ بین ۱۰ تا ۳۶۰۰ ثانیه",
+        "fingerprint": "اثر انگشت TLS"
+      },
+      "customCdn": {
+        "title": "CDN سفارشی",
+        "addrs": "آدرس‌ها (هر خط یک مورد)",
+        "host": "هدر Host",
+        "sni": "SNI"
+      },
+      "ips": {
+        "title": "آی‌پی‌ها و پورت‌ها",
+        "cleanIps": "آی‌پی‌های تمیز (هر خط یک مورد)",
+        "proxyIps": "آی‌پی‌های پراکسی (هر خط یک مورد)",
+        "ports": "پورت‌ها (با کاما جدا کنید)",
+        "portsInvalid": "پورت‌ها باید عددی بین ۱ تا ۶۵۵۳۵ باشند"
+      },
+      "dns": {
+        "title": "دی‌ان‌اس",
+        "local": "DNS داخلی",
+        "antiSanction": "DNS ضد تحریم",
+        "remote": "DNS خارجی (DoH)",
+        "remotePlaceholder": "https://dns.google/dns-query",
+        "fakeDns": "فعال‌سازی Fake DNS"
+      },
+      "errors": {
+        "validation": "بخش‌هایی از تنظیمات شبکه نامعتبر است. فیلدهای مشخص‌شده را اصلاح کنید.",
+        "conflict": "فرگمنت و ECH نمی‌توانند هم‌زمان فعال باشند."
+      },
+      "readOnly": "شما فقط دسترسی مشاهده به تنظیمات شبکه دارید.",
+      "saved": "تنظیمات شبکه ذخیره شد"
+    },
+    "security": {
+      "changePassword": "تغییر رمز عبور",
+      "currentPassword": "رمز عبور فعلی",
+      "newPassword": "رمز عبور جدید",
+      "confirmPassword": "تکرار رمز عبور جدید",
+      "passwordMismatch": "رمزهای عبور یکسان نیستند",
+      "passwordTooShort": "رمز عبور باید حداقل ۸ کاراکتر باشد",
+      "passwordWrong": "رمز عبور فعلی اشتباه است",
+      "passwordChanged": "رمز عبور تغییر کرد",
+      "session": "نشست‌ها",
+      "sessionTtl": "مدت نشست",
+      "hours": "ساعت",
+      "twofa": "احراز هویت دومرحله‌ای",
+      "twofaSoon": "به‌زودی"
+    },
+    "appearance": {
+      "theme": "تم",
+      "themeLight": "روشن",
+      "themeDark": "تیره",
+      "themeSystem": "سیستم",
+      "language": "زبان",
+      "compact": "چیدمان فشرده",
+      "compactHint": "فاصله‌های کمتر در کل پنل"
+    },
+    "admins": {
+      "addAdmin": "افزودن مدیر",
+      "editAdmin": "ویرایش مدیر",
+      "table": {
+        "username": "نام کاربری",
+        "role": "نقش",
+        "lastLogin": "آخرین ورود",
+        "active": "فعال",
+        "actions": "عملیات"
+      },
+      "role": {
+        "owner": "مالک",
+        "admin": "مدیر",
+        "viewer": "بازدیدکننده"
+      },
+      "form": {
+        "username": "نام کاربری",
+        "usernameRequired": "نام کاربری الزامی است",
+        "usernameTaken": "این نام کاربری قبلاً استفاده شده است",
+        "password": "رمز عبور",
+        "passwordRequired": "رمز عبور الزامی است",
+        "role": "نقش"
+      },
+      "confirmDelete": {
+        "title": "حذف مدیر",
+        "message": "آیا از حذف مدیر «{{name}}» مطمئن هستید؟"
+      },
+      "toasts": {
+        "created": "مدیر ایجاد شد",
+        "updated": "مدیر به‌روزرسانی شد",
+        "deleted": "مدیر حذف شد"
+      },
+      "empty": {
+        "title": "مدیری وجود ندارد",
+        "description": "برای کمک به مدیریت پنل، یک مدیر اضافه کنید."
+      },
+      "you": "شما"
+    }
+  },
+  "notFound": {
+    "title": "صفحه پیدا نشد",
+    "description": "صفحه‌ای که دنبال آن هستید وجود ندارد یا جابه‌جا شده است.",
+    "goHome": "رفتن به داشبورد"
+  },
+  "errors": {
+    "network": "خطای شبکه. لطفاً دوباره تلاش کنید.",
+    "unknown": "مشکلی پیش آمد. لطفاً دوباره تلاش کنید.",
+    "unauthorized": "نشست شما منقضی شده است. لطفاً دوباره وارد شوید.",
+    "forbidden": "شما اجازه انجام این کار را ندارید."
+  }
+}

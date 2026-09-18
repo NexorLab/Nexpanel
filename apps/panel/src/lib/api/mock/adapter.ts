@@ -1,0 +1,688 @@
+import type { ApiClient } from "../endpoints";
+import type {
+  AuthStatus,
+  Backend,
+  Config,
+  ConfigUser,
+  LoginResult,
+  NetworkSettings,
+  PanelAdmin,
+  PanelSettings,
+  StatsOverview,
+  Subscription,
+} from "../../../types/dto";
+import { DEFAULT_SETTINGS } from "../../settings";
+import {
+  buildSeedConfigs,
+  buildSeedStats,
+  seedAdmins,
+  seedBackends,
+  seedSubscriptions,
+  seedUsers,
+} from "./seed";
+
+/**
+ * In-memory implementation of ApiClient.
+ * Simulates network latency and mirrors what the real backend will do,
+ * including duplicate-name conflicts, pagination and auth codes.
+ */
+
+const LATENCY_MS = 220;
+
+/** Mock accounts — matches the demo hint on the login page. */
+const MOCK_ACCOUNTS: Record<
+  string,
+  { password: string; id: string; role: "owner" | "viewer" }
+> = {
+  admin: { password: "admin", id: "admin-1", role: "owner" },
+  viewer: { password: "viewer", id: "viewer-1", role: "viewer" },
+};
+
+// First-run simulation: remove this key in devtools to see the setup
+// page again. Set by mock setup()/login() so a reload shows normal login.
+const SETUP_KEY = "nexpanel.setup.mock";
+
+function delay<T>(value: T): Promise<T> {
+  return new Promise((resolve) =>
+    window.setTimeout(() => resolve(value), LATENCY_MS),
+  );
+}
+
+function now(): number {
+  return Math.floor(Date.now() / 1000);
+}
+
+function randomToken(): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function randomUuid(): string {
+  return crypto.randomUUID();
+}
+
+function paginate<T>(items: T[], page = 1, perPage = 20) {
+  const total = items.length;
+  const start = (page - 1) * perPage;
+  return {
+    data: items.slice(start, start + perPage),
+    meta: { page, perPage, total },
+  };
+}
+
+class ConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ConflictError";
+  }
+}
+
+class NotFoundError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "NotFoundError";
+  }
+}
+
+/** Auth failures (UNAUTHORIZED, SETUP_ALREADY_DONE, WRONG_PASSWORD, …). */
+class AuthError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AuthError";
+  }
+}
+
+const MOCK_SETTINGS_KEY = "nexpanel.settings.mock";
+// Pre-API key used by the old General tab; migrated once, then removed.
+const LEGACY_GENERAL_KEY = "nexpanel.settings.general";
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function mergeSettings(stored: unknown): PanelSettings {
+  const source = isRecord(stored) ? stored : {};
+  const general = { ...DEFAULT_SETTINGS.general };
+  const network: NetworkSettings = structuredClone(DEFAULT_SETTINGS.network);
+  const storedGeneral = isRecord(source.general) ? source.general : {};
+  const storedNetwork = isRecord(source.network) ? source.network : {};
+  for (const key of Object.keys(general) as (keyof typeof general)[]) {
+    if (storedGeneral[key] !== undefined) {
+      // @ts-expect-error assignment is guarded by matching keys
+      general[key] = storedGeneral[key];
+    }
+  }
+  for (const key of Object.keys(network) as (keyof NetworkSettings)[]) {
+    const incoming = storedNetwork[key];
+    if (incoming === undefined) continue;
+    const fallback = network[key] as unknown;
+    const target = network as unknown as Record<string, unknown>;
+    if (Array.isArray(fallback)) {
+      target[key as string] = Array.isArray(incoming) ? incoming : fallback;
+    } else if (isRecord(fallback) && isRecord(incoming)) {
+      target[key as string] = { ...fallback, ...incoming };
+    } else if (!isRecord(fallback)) {
+      target[key as string] = incoming;
+    }
+  }
+  return { general, network };
+}
+
+function loadSettings(): PanelSettings {
+  try {
+    const raw = localStorage.getItem(MOCK_SETTINGS_KEY);
+    if (raw) return mergeSettings(JSON.parse(raw));
+  } catch {
+    // ignore malformed storage
+  }
+  try {
+    const legacy = localStorage.getItem(LEGACY_GENERAL_KEY);
+    if (legacy) {
+      const migrated = mergeSettings({ general: JSON.parse(legacy) });
+      localStorage.removeItem(LEGACY_GENERAL_KEY);
+      localStorage.setItem(MOCK_SETTINGS_KEY, JSON.stringify(migrated));
+      return migrated;
+    }
+  } catch {
+    // ignore malformed storage
+  }
+  return structuredClone(DEFAULT_SETTINGS);
+}
+
+function assertValidNetwork(network: NetworkSettings): void {
+  const fragment = network.fragment;
+  const invalidLength =
+    !Number.isInteger(fragment.lengthMin) ||
+    !Number.isInteger(fragment.lengthMax) ||
+    fragment.lengthMin < 20 ||
+    fragment.lengthMax > 1000 ||
+    fragment.lengthMin > fragment.lengthMax;
+  if (invalidLength) throw new ConflictError("INVALID_FRAGMENT_LENGTH");
+
+  const invalidDelay =
+    !Number.isInteger(fragment.delayMin) ||
+    !Number.isInteger(fragment.delayMax) ||
+    fragment.delayMin < 0 ||
+    fragment.delayMax > 5000 ||
+    fragment.delayMin > fragment.delayMax;
+  if (invalidDelay) throw new ConflictError("INVALID_FRAGMENT_DELAY");
+
+  const invalidSplit =
+    !Number.isInteger(fragment.maxSplitMin) ||
+    !Number.isInteger(fragment.maxSplitMax) ||
+    fragment.maxSplitMin < 0 ||
+    fragment.maxSplitMax > 20 ||
+    fragment.maxSplitMin > fragment.maxSplitMax;
+  if (invalidSplit) throw new ConflictError("INVALID_FRAGMENT_SPLIT");
+
+  if (!network.ports.every((port) => Number.isInteger(port) && port >= 1 && port <= 65535)) {
+    throw new ConflictError("INVALID_PORTS");
+  }
+
+  if (
+    !Number.isInteger(network.bestPingInterval) ||
+    network.bestPingInterval < 10 ||
+    network.bestPingInterval > 3600
+  ) {
+    throw new ConflictError("INVALID_PING_INTERVAL");
+  }
+
+  if (!network.dns.remote.startsWith("https://")) {
+    throw new ConflictError("INVALID_DOH_URL");
+  }
+
+  const serverName = network.ech.serverName.trim();
+  if (serverName && !/^(?=.{1,253}$)([a-z0-9](-*[a-z0-9])*\.)+[a-z]{2,}$/i.test(serverName)) {
+    throw new ConflictError("INVALID_ECH_SERVER_NAME");
+  }
+
+  if (network.fragment.mode === "custom" && network.ech.enabled) {
+    throw new ConflictError("FRAGMENT_ECH_CONFLICT");
+  }
+}
+
+function persistSettings(settings: PanelSettings): void {
+  try {
+    localStorage.setItem(MOCK_SETTINGS_KEY, JSON.stringify(settings));
+  } catch {
+    // private mode / quota errors must not fail the request
+  }
+}
+
+export function createMockAdapter(): ApiClient {
+  // Module-level state lives for the SPA session (reset on reload).
+  let users: ConfigUser[] = seedUsers.map((user) => ({ ...user }));
+  let backends: Backend[] = seedBackends.map((backend) => ({ ...backend }));
+  let configs: Config[] = buildSeedConfigs(users);
+  let admins: PanelAdmin[] = seedAdmins.map((admin) => ({ ...admin }));
+  let subscriptions: Subscription[] = seedSubscriptions.map(
+    (sub, index): Subscription => ({
+      ...sub,
+      userId: users[index % users.length].id,
+    }),
+  );
+  let settings: PanelSettings = loadSettings();
+
+  function assertUniqueUsername(username: string, exceptId?: string) {
+    const clash = users.some(
+      (user) =>
+        user.id !== exceptId && user.username.toLowerCase() === username.toLowerCase(),
+    );
+    if (clash) throw new ConflictError("USERNAME_TAKEN");
+  }
+
+  function assertUniqueBackendName(name: string, exceptId?: string) {
+    const clash = backends.some(
+      (backend) =>
+        backend.id !== exceptId && backend.name.toLowerCase() === name.toLowerCase(),
+    );
+    if (clash) throw new ConflictError("NAME_TAKEN");
+  }
+
+  function buildUri(user: ConfigUser, backend: Backend): string {
+    const params = new URLSearchParams();
+    if (backend.protocol === "vmess") {
+      const payload = {
+        v: "2",
+        ps: `NexPanel-${backend.name}`,
+        add: backend.host,
+        port: backend.port,
+        id: user.uuid,
+        aid: 0,
+        net: backend.transport,
+        type: "none",
+        host: backend.hostHeader ?? "",
+        path: backend.path ?? "",
+        tls: backend.security === "none" ? "" : backend.security,
+      };
+      return `vmess://${btoa(JSON.stringify(payload))}`;
+    }
+
+    if (backend.protocol === "shadowsocks") {
+      const userInfo = btoa(`${backend.method}:${backend.password}`);
+      return `ss://${userInfo.replace(/=+$/, "")}@${backend.host}:${backend.port}#NexPanel-${backend.name}`;
+    }
+
+    if (backend.transport !== "tcp") params.set("type", backend.transport);
+    if (backend.security !== "none") params.set("security", backend.security);
+    if (backend.sni) params.set("sni", backend.sni);
+    if (backend.hostHeader) params.set("host", backend.hostHeader);
+    if (backend.path) params.set("path", backend.path);
+    if (backend.serviceName) params.set("serviceName", backend.serviceName);
+    if (backend.fingerprint) params.set("fp", backend.fingerprint);
+    const scheme = backend.protocol === "trojan" ? "trojan" : "vless";
+    const query = params.toString();
+    return `${scheme}://${user.uuid}@${backend.host}:${backend.port}${query ? `?${query}` : ""}#NexPanel-${backend.name}`;
+  }
+
+  return {
+    // auth
+    async getAuthStatus(): Promise<AuthStatus> {
+      const needsSetup = localStorage.getItem(SETUP_KEY) !== "done";
+      return delay({ needsSetup });
+    },
+
+    async setup({ username, password }): Promise<LoginResult> {
+      if (localStorage.getItem(SETUP_KEY) === "done") {
+        throw new AuthError("SETUP_ALREADY_DONE");
+      }
+      const name = username.trim();
+      if (!/^[A-Za-z0-9._-]{3,32}$/.test(name) || password.length < 8) {
+        throw new Error("VALIDATION_ERROR");
+      }
+      // Replace a same-name seed admin case-insensitively, else append.
+      const existing = admins.find(
+        (admin) => admin.username.toLowerCase() === name.toLowerCase(),
+      );
+      const created: PanelAdmin = {
+        id: existing?.id ?? `admin-${crypto.randomUUID().slice(0, 8)}`,
+        username: name,
+        role: "owner",
+        isActive: true,
+        lastLoginAt: now(),
+        createdAt: existing?.createdAt ?? now(),
+        updatedAt: now(),
+      };
+      admins = existing
+        ? admins.map((admin) => (admin.id === existing.id ? created : admin))
+        : [...admins, created];
+      localStorage.setItem(SETUP_KEY, "done");
+      return delay({ token: "mock-token", admin: { ...created } });
+    },
+
+    async login({ username, password }): Promise<LoginResult> {
+      const account = MOCK_ACCOUNTS[username.trim().toLowerCase()];
+      if (!account || account.password !== password) {
+        throw new AuthError("UNAUTHORIZED");
+      }
+      localStorage.setItem(SETUP_KEY, "done");
+      return delay({
+        token: "mock-token",
+        admin: {
+          id: account.id,
+          username: username.trim(),
+          role: account.role,
+        },
+      });
+    },
+
+    async logout(): Promise<void> {
+      return delay(undefined);
+    },
+
+    async changePassword({ currentPassword, newPassword }): Promise<void> {
+      if (currentPassword !== "admin") {
+        throw new AuthError("WRONG_PASSWORD");
+      }
+      if (newPassword.length < 8) {
+        throw new Error("VALIDATION_ERROR");
+      }
+      return delay(undefined);
+    },
+
+    async getStats(): Promise<StatsOverview> {
+      return delay(buildSeedStats(users, backends, configs, subscriptions));
+    },
+
+    async listUsers({ search, status, page = 1, perPage = 20 } = {}) {
+      let result = [...users];
+      if (search) {
+        const needle = search.toLowerCase();
+        result = result.filter(
+          (user) =>
+            user.username.toLowerCase().includes(needle) ||
+            (user.note ?? "").toLowerCase().includes(needle),
+        );
+      }
+      if (status && status !== "all") {
+        result = result.filter((user) => user.status === status);
+      }
+      result.sort((a, b) => b.createdAt - a.createdAt);
+      return delay(paginate(result, page, perPage));
+    },
+
+    async getUser(id) {
+      const user = users.find((candidate) => candidate.id === id);
+      if (!user) throw new NotFoundError("USER_NOT_FOUND");
+      return delay({ ...user });
+    },
+
+    async createUser({ username, note, quotaGb = 0, expiryDays, ipLimit = 0, enabled = true }) {
+      assertUniqueUsername(username);
+      const user: ConfigUser = {
+        id: `u-${crypto.randomUUID().slice(0, 8)}`,
+        uuid: randomUuid(),
+        username,
+        note: note ?? null,
+        status: enabled ? "active" : "disabled",
+        quotaBytes: Math.round(quotaGb * 1024 ** 3),
+        usedBytes: 0,
+        expiryAt: expiryDays ? now() + expiryDays * 86400 : null,
+        ipLimit,
+        createdAt: now(),
+        updatedAt: now(),
+      };
+      users = [user, ...users];
+      return delay({ ...user });
+    },
+
+    async updateUser(id, body) {
+      const user = users.find((candidate) => candidate.id === id);
+      if (!user) throw new NotFoundError("USER_NOT_FOUND");
+      if (body.username) assertUniqueUsername(body.username, id);
+
+      if (body.username !== undefined) user.username = body.username;
+      if (body.note !== undefined) user.note = body.note;
+      if (body.quotaGb !== undefined) user.quotaBytes = Math.round(body.quotaGb * 1024 ** 3);
+      if (body.expiryAt !== undefined) user.expiryAt = body.expiryAt;
+      if (body.ipLimit !== undefined) user.ipLimit = body.ipLimit;
+      if (body.enabled !== undefined) {
+        user.status = body.enabled ? "active" : "disabled";
+      }
+      user.updatedAt = now();
+      return delay({ ...user });
+    },
+
+    async deleteUser(id) {
+      users = users.filter((user) => user.id !== id);
+      configs = configs.filter((config) => config.userId !== id);
+      subscriptions = subscriptions.filter((sub) => sub.userId !== id);
+      return delay(undefined);
+    },
+
+    async resetUserUuid(id) {
+      const user = users.find((candidate) => candidate.id === id);
+      if (!user) throw new NotFoundError("USER_NOT_FOUND");
+      user.uuid = randomUuid();
+      // Regenerate URIs so existing configs point at the new uuid
+      configs = configs.map((config) => {
+        if (config.userId !== id) return config;
+        const backend = backends.find((candidate) => candidate.id === config.backendId);
+        return backend
+          ? { ...config, uri: buildUri(user, backend), lastGeneratedAt: now() }
+          : config;
+      });
+      user.updatedAt = now();
+      return delay({ ...user });
+    },
+
+    async listBackends({ protocol, status } = {}) {
+      let result = [...backends];
+      if (protocol && protocol !== "all") {
+        result = result.filter((backend) => backend.protocol === protocol);
+      }
+      if (status && status !== "all") {
+        result = result.filter((backend) => backend.status === status);
+      }
+      result.sort((a, b) => a.sortOrder - b.sortOrder);
+      return delay(result);
+    },
+
+    async createBackend(body) {
+      assertUniqueBackendName(body.name);
+      const backend: Backend = {
+        ...body,
+        id: `b-${crypto.randomUUID().slice(0, 8)}`,
+        sortOrder: backends.length + 1,
+        createdAt: now(),
+        updatedAt: now(),
+      };
+      backends = [...backends, backend];
+      return delay({ ...backend });
+    },
+
+    async updateBackend(id, body) {
+      const backend = backends.find((candidate) => candidate.id === id);
+      if (!backend) throw new NotFoundError("BACKEND_NOT_FOUND");
+      if (body.name) assertUniqueBackendName(body.name, id);
+
+      Object.assign(backend, body, { updatedAt: now() });
+
+      // Refresh URIs of derived configs
+      configs = configs.map((config) => {
+        if (config.backendId !== id) return config;
+        const user = users.find((candidate) => candidate.id === config.userId);
+        return user
+          ? { ...config, uri: buildUri(user, backend), lastGeneratedAt: now() }
+          : config;
+      });
+
+      return delay({ ...backend });
+    },
+
+    async deleteBackend(id) {
+      backends = backends.filter((backend) => backend.id !== id);
+      configs = configs.filter((config) => config.backendId !== id);
+      return delay(undefined);
+    },
+
+    async testBackend(id) {
+      const backend = backends.find((candidate) => candidate.id === id);
+      if (!backend) throw new NotFoundError("BACKEND_NOT_FOUND");
+      return delay({ latencyMs: 40 + Math.floor(Math.random() * 160) });
+    },
+
+    async listConfigs({ userId, backendId, protocol, search, page = 1, perPage = 20 } = {}) {
+      let result = [...configs];
+      if (userId && userId !== "all") {
+        result = result.filter((config) => config.userId === userId);
+      }
+      if (backendId && backendId !== "all") {
+        result = result.filter((config) => config.backendId === backendId);
+      }
+      if (protocol && protocol !== "all") {
+        result = result.filter((config) => config.protocol === protocol);
+      }
+      if (search) {
+        const needle = search.toLowerCase();
+        result = result.filter(
+          (config) =>
+            config.name.toLowerCase().includes(needle) ||
+            config.uri.toLowerCase().includes(needle),
+        );
+      }
+      result.sort((a, b) => b.createdAt - a.createdAt);
+      return delay(paginate(result, page, perPage));
+    },
+
+    async deleteConfig(id) {
+      configs = configs.filter((config) => config.id !== id);
+      return delay(undefined);
+    },
+
+    async rebuildConfig(id) {
+      const config = configs.find((candidate) => candidate.id === id);
+      if (!config) throw new NotFoundError("CONFIG_NOT_FOUND");
+      const user = users.find((candidate) => candidate.id === config.userId);
+      const backend = backends.find((candidate) => candidate.id === config.backendId);
+      if (user && backend) {
+        config.uri = buildUri(user, backend);
+        config.lastGeneratedAt = now();
+      }
+      return delay({ ...config });
+    },
+
+    async generateConfigs({ userId, backendIds }) {
+      const user = users.find((candidate) => candidate.id === userId);
+      if (!user) throw new NotFoundError("USER_NOT_FOUND");
+
+      const created: Config[] = [];
+      for (const backendId of backendIds) {
+        const existing = configs.find(
+          (config) => config.userId === userId && config.backendId === backendId,
+        );
+        const backend = backends.find((candidate) => candidate.id === backendId);
+        if (!backend || backend.status !== "active") continue;
+
+        if (existing) {
+          existing.uri = buildUri(user, backend);
+          existing.lastGeneratedAt = now();
+          created.push({ ...existing });
+          continue;
+        }
+
+        const config: Config = {
+          id: `c-${crypto.randomUUID().slice(0, 8)}`,
+          userId,
+          backendId,
+          protocol: backend.protocol,
+          name: `${backend.name}-${backend.protocol.toUpperCase()}`,
+          uri: buildUri(user, backend),
+          isActive: true,
+          lastGeneratedAt: now(),
+          createdAt: now(),
+          updatedAt: now(),
+        };
+        configs = [config, ...configs];
+        created.push({ ...config });
+      }
+      return delay(created);
+    },
+
+    async listSubscriptions({ userId } = {}) {
+      let result = [...subscriptions];
+      if (userId && userId !== "all") {
+        result = result.filter((sub) => sub.userId === userId);
+      }
+      result.sort((a, b) => b.createdAt - a.createdAt);
+      return delay(result);
+    },
+
+    async createSubscription({ userId, name, format }) {
+      const subscription: Subscription = {
+        id: `s-${crypto.randomUUID().slice(0, 8)}`,
+        userId,
+        token: randomToken(),
+        name,
+        format,
+        includeInactive: false,
+        expiresAt: null,
+        lastAccessAt: null,
+        accessCount: 0,
+        createdAt: now(),
+        updatedAt: now(),
+      };
+      subscriptions = [subscription, ...subscriptions];
+      return delay({ ...subscription });
+    },
+
+    async updateSubscription(id, body) {
+      const subscription = subscriptions.find((candidate) => candidate.id === id);
+      if (!subscription) throw new NotFoundError("SUBSCRIPTION_NOT_FOUND");
+      Object.assign(subscription, body, { updatedAt: now() });
+      return delay({ ...subscription });
+    },
+
+    async deleteSubscription(id) {
+      subscriptions = subscriptions.filter((sub) => sub.id !== id);
+      return delay(undefined);
+    },
+
+    async rotateSubscriptionToken(id) {
+      const subscription = subscriptions.find((candidate) => candidate.id === id);
+      if (!subscription) throw new NotFoundError("SUBSCRIPTION_NOT_FOUND");
+      subscription.token = randomToken();
+      subscription.accessCount = 0;
+      subscription.lastAccessAt = null;
+      subscription.updatedAt = now();
+      return delay({ ...subscription });
+    },
+
+    async getSettings(): Promise<PanelSettings> {
+      return delay(structuredClone(settings));
+    },
+
+    async updateSettings(body): Promise<PanelSettings> {
+      if (body.general) {
+        settings = {
+          ...settings,
+          general: { ...settings.general, ...body.general },
+        };
+      }
+      if (body.network) {
+        const merged: PanelSettings = {
+          ...settings,
+          network: {
+            ...settings.network,
+            ...body.network,
+            fragment: { ...settings.network.fragment, ...body.network.fragment },
+            ech: { ...settings.network.ech, ...body.network.ech },
+            customCdn: { ...settings.network.customCdn, ...body.network.customCdn },
+            dns: { ...settings.network.dns, ...body.network.dns },
+          },
+        };
+        assertValidNetwork(merged.network);
+        settings = merged;
+      }
+      persistSettings(settings);
+      return delay(structuredClone(settings));
+    },
+
+    async listAdmins() {
+      return delay(admins.map((admin) => ({ ...admin })));
+    },
+
+    async createAdmin({ username, role }) {
+      const clash = admins.some(
+        (admin) => admin.username.toLowerCase() === username.toLowerCase(),
+      );
+      if (clash) throw new ConflictError("USERNAME_TAKEN");
+      const admin: PanelAdmin = {
+        id: `admin-${crypto.randomUUID().slice(0, 8)}`,
+        username,
+        role,
+        isActive: true,
+        lastLoginAt: null,
+        createdAt: now(),
+        updatedAt: now(),
+      };
+      admins = [...admins, admin];
+      return delay({ ...admin });
+    },
+
+    async updateAdmin(id, body) {
+      const admin = admins.find((candidate) => candidate.id === id);
+      if (!admin) throw new NotFoundError("ADMIN_NOT_FOUND");
+      if (body.role !== undefined) admin.role = body.role;
+      if (body.isActive !== undefined) admin.isActive = body.isActive;
+      admin.updatedAt = now();
+      return delay({ ...admin });
+    },
+
+    async deleteAdmin(id) {
+      const admin = admins.find((candidate) => candidate.id === id);
+      if (!admin) throw new NotFoundError("ADMIN_NOT_FOUND");
+      if (admin.role === "owner") {
+        const remainingOwners = admins.filter(
+          (candidate) => candidate.role === "owner" && candidate.id !== id,
+        );
+        if (remainingOwners.length === 0) {
+          throw new ConflictError("LAST_OWNER");
+        }
+      }
+      admins = admins.filter((candidate) => candidate.id !== id);
+      return delay(undefined);
+    },
+  };
+}
