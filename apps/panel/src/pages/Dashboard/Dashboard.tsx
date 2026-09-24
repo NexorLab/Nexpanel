@@ -15,7 +15,7 @@ import { useApi } from "../../hooks/useApi";
 import { getApi } from "../../lib/api";
 import { useFormat } from "../../lib/format";
 import { useLanguage } from "../../contexts/LanguageContext";
-import type { StatsOverview } from "../../types/dto";
+import type { Protocol, StatsOverview } from "../../types/dto";
 import "./Dashboard.css";
 
 interface StatCardProps {
@@ -145,7 +145,7 @@ export default function Dashboard() {
             <h3>{t("dashboard.charts.byProtocol")}</h3>
           </div>
           <BarChart
-            bars={(Object.keys(stats.configs.byProtocol) as (keyof typeof stats.configs.byProtocol)[]).map(
+            bars={(Object.keys(stats.configs.byProtocol) as Protocol[]).map(
               (protocol) => ({
                 label: t(`backends.protocol.${protocol}`),
                 value: stats.configs.byProtocol[protocol],
