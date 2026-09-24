@@ -136,14 +136,24 @@ export interface SettingsRepository {
   set(key: string, value: unknown): Promise<void>;
 }
 
-/** Dashboard aggregates — the wire shape of GET /stats/overview (minus activity). */
-export interface StatsOverview {
+/**
+ * Dashboard aggregates — the wire shape of GET /stats/overview (minus
+ * activity, which the panel composes on top). Core owns this shape so the
+ * API and the panel can never drift.
+ */
+export interface StatsOverviewBase {
   users: { total: number; active: number; disabled: number; expired: number };
   backends: { total: number; active: number };
   configs: { total: number; byProtocol: Record<Config["protocol"], number> };
   subscriptions: { total: number; active: number };
   series: { configsPerDay: { date: string; count: number }[] };
 }
+
+/**
+ * Repository-facing name. The storage layer does not know about the
+ * panel's activity feed, so this is the base shape exactly.
+ */
+export type StatsOverview = StatsOverviewBase;
 
 export interface StatsRepository {
   overview(): Promise<StatsOverview>;

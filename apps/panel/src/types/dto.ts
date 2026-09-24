@@ -92,7 +92,7 @@ export interface PanelAdmin {
 
 // Settings types are the shared domain — single source of truth in core
 // so the panel and the API can never drift.
-export type {
+import type {
   CustomCdnSettings,
   DnsSettings,
   EchSettings,
@@ -105,6 +105,20 @@ export type {
   StatsOverviewBase,
   TlsFingerprint,
 } from "@nexpanel/core";
+
+export type {
+  CustomCdnSettings,
+  DnsSettings,
+  EchSettings,
+  FragmentMode,
+  FragmentPackets,
+  FragmentSettings,
+  GeneralSettings,
+  NetworkSettings,
+  PanelSettings,
+  StatsOverviewBase,
+  TlsFingerprint,
+};
 
 export interface AuthStatus {
   needsSetup: boolean;
