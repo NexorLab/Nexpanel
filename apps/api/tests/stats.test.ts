@@ -26,15 +26,11 @@ function authed(method: string, path: string, token: string, body?: unknown) {
 }
 
 type Overview = {
-  totals: {
-    users: number;
-    activeUsers: number;
-    configs: number;
-    backends: { total: number; active: number };
-    subscriptions: { total: number; active: number };
-  };
-  configsPerDay: { date: string; count: number }[];
-  byProtocol: Record<string, number>;
+  users: { total: number; active: number; disabled: number; expired: number };
+  backends: { total: number; active: number };
+  configs: { total: number; byProtocol: Record<string, number> };
+  subscriptions: { total: number; active: number };
+  series: { configsPerDay: { date: string; count: number }[] };
   activity: { messageKey: string; params: Record<string, string | number> }[];
 };
 
@@ -53,15 +49,17 @@ describe("stats", () => {
   it("returns a zeroed overview on a fresh instance", async () => {
     const { token } = await setupOwner(app, env);
     const overview = await getOverview(token);
-    expect(overview.totals).toMatchObject({
-      users: 0,
-      activeUsers: 0,
-      configs: 0,
-      backends: { total: 0, active: 0 },
-      subscriptions: { total: 0, active: 0 },
+    expect(overview.users).toEqual({ total: 0, active: 0, disabled: 0, expired: 0 });
+    expect(overview.configs.total).toBe(0);
+    expect(overview.backends).toEqual({ total: 0, active: 0 });
+    expect(overview.subscriptions).toEqual({ total: 0, active: 0 });
+    expect(overview.series.configsPerDay).toHaveLength(7);
+    expect(overview.configs.byProtocol).toEqual({
+      vless: 0,
+      vmess: 0,
+      trojan: 0,
+      shadowsocks: 0,
     });
-    expect(overview.configsPerDay).toHaveLength(7);
-    expect(overview.byProtocol).toEqual({ vless: 0, vmess: 0, trojan: 0, shadowsocks: 0 });
     expect(overview.activity).toEqual([]);
   });
 
@@ -73,30 +71,30 @@ describe("stats", () => {
     await createSubscription(app, env, token, user.id);
 
     const overview = await getOverview(token);
-    expect(overview.totals).toMatchObject({
-      users: 1,
-      activeUsers: 1,
-      configs: 1,
-      backends: { total: 1, active: 1 },
-      subscriptions: { total: 1, active: 1 },
-    });
-    expect(overview.byProtocol.vless).toBe(1);
+    expect(overview.users.total).toBe(1);
+    expect(overview.users.active).toBe(1);
+    expect(overview.configs.total).toBe(1);
+    expect(overview.backends).toEqual({ total: 1, active: 1 });
+    expect(overview.subscriptions).toEqual({ total: 1, active: 1 });
+    expect(overview.configs.byProtocol.vless).toBe(1);
 
     const today = new Date().toISOString().slice(0, 10);
-    const todayBucket = overview.configsPerDay.find((day) => day.date === today);
+    const todayBucket = overview.series.configsPerDay.find((day) => day.date === today);
     expect(todayBucket?.count).toBe(1);
   });
 
-  it("counts expired users and subscriptions as inactive", async () => {
+  it("counts disabled and expired users separately from active ones", async () => {
     const { token } = await setupOwner(app, env);
-    const user = await createUser(app, env, token, { expiryAt: 1 });
-    const subscription = await createSubscription(app, env, token, user.id);
-    // expiresAt is set via PATCH (create always starts unexpired).
+    await createUser(app, env, token); // active
+    await createUser(app, env, token, { status: "disabled" }); // disabled
+    const expired = await createUser(app, env, token, { expiryAt: 1 }); // expired
+    // The subscription belongs to the expired user; create starts it unexpired.
+    const subscription = await createSubscription(app, env, token, expired.id);
     await authed("PATCH", `/api/v1/subscriptions/${subscription.id}`, token, { expiresAt: 1 });
 
     const overview = await getOverview(token);
-    expect(overview.totals.activeUsers).toBe(0);
-    expect(overview.totals.subscriptions).toMatchObject({ total: 1, active: 0 });
+    expect(overview.users).toEqual({ total: 3, active: 1, disabled: 1, expired: 1 });
+    expect(overview.subscriptions).toMatchObject({ total: 1, active: 0 });
   });
 
   it("records the activity feed newest-first with i18n keys", async () => {

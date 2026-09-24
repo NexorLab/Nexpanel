@@ -136,18 +136,17 @@ export interface SettingsRepository {
   set(key: string, value: unknown): Promise<void>;
 }
 
+/** Dashboard aggregates — the wire shape of GET /stats/overview (minus activity). */
+export interface StatsOverview {
+  users: { total: number; active: number; disabled: number; expired: number };
+  backends: { total: number; active: number };
+  configs: { total: number; byProtocol: Record<Config["protocol"], number> };
+  subscriptions: { total: number; active: number };
+  series: { configsPerDay: { date: string; count: number }[] };
+}
+
 export interface StatsRepository {
-  overview(): Promise<{
-    totals: {
-      users: number;
-      activeUsers: number;
-      configs: number;
-      backends: { total: number; active: number };
-      subscriptions: { total: number; active: number };
-    };
-    configsPerDay: { date: string; count: number }[];
-    byProtocol: Record<Config["protocol"], number>;
-  }>;
+  overview(): Promise<StatsOverview>;
 }
 
 /**

@@ -102,6 +102,7 @@ export type {
   GeneralSettings,
   NetworkSettings,
   PanelSettings,
+  StatsOverviewBase,
   TlsFingerprint,
 } from "@nexpanel/core";
 
@@ -114,12 +115,9 @@ export interface LoginResult {
   admin: { id: string; username: string; role: AdminRole };
 }
 
-export interface StatsOverview {
-  users: { total: number; active: number; disabled: number; expired: number };
-  backends: { total: number; active: number };
-  configs: { total: number; byProtocol: Record<Protocol, number> };
-  subscriptions: { total: number; active: number };
-  series: { configsPerDay: { date: string; count: number }[] };
+// StatsOverview is the shared domain — single source of truth in core;
+// the API composes `activity` on top of it.
+export interface StatsOverview extends StatsOverviewBase {
   activity: { id: string; messageKey: string; params: Record<string, string>; at: number }[];
 }
 
