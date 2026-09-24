@@ -31,11 +31,14 @@ export function createStatsRepository(db: D1Database): StatsRepository {
         .prepare(
           `SELECT COUNT(*) AS total,
                   COALESCE(SUM(CASE WHEN status = 'active'
-                             AND (expiry_at IS NULL OR expiry_at > ?1) THEN 1 ELSE 0 END), 0) AS active
+                             AND (expiry_at IS NULL OR expiry_at > ?1) THEN 1 ELSE 0 END), 0) AS active,
+                  COALESCE(SUM(CASE WHEN status = 'disabled' THEN 1 ELSE 0 END), 0) AS disabled,
+                  COALESCE(SUM(CASE WHEN status != 'disabled'
+                             AND expiry_at IS NOT NULL AND expiry_at <= ?1 THEN 1 ELSE 0 END), 0) AS expired
            FROM users`,
         )
         .bind(timestamp)
-        .first<{ total: number; active: number }>();
+        .first<{ total: number; active: number; disabled: number; expired: number }>();
 
       const configsRow = await db
         .prepare("SELECT COUNT(*) AS n FROM configs")
@@ -88,18 +91,19 @@ export function createStatsRepository(db: D1Database): StatsRepository {
       }));
 
       return {
-        totals: {
-          users: usersRow?.total ?? 0,
-          activeUsers: usersRow?.active ?? 0,
-          configs: configsRow?.n ?? 0,
-          backends: { total: backendsRow?.total ?? 0, active: backendsRow?.active ?? 0 },
-          subscriptions: {
-            total: subscriptionsRow?.total ?? 0,
-            active: subscriptionsRow?.active ?? 0,
-          },
+        users: {
+          total: usersRow?.total ?? 0,
+          active: usersRow?.active ?? 0,
+          disabled: usersRow?.disabled ?? 0,
+          expired: usersRow?.expired ?? 0,
         },
-        configsPerDay,
-        byProtocol,
+        backends: { total: backendsRow?.total ?? 0, active: backendsRow?.active ?? 0 },
+        configs: { total: configsRow?.n ?? 0, byProtocol },
+        subscriptions: {
+          total: subscriptionsRow?.total ?? 0,
+          active: subscriptionsRow?.active ?? 0,
+        },
+        series: { configsPerDay },
       };
     },
   };

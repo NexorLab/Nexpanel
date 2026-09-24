@@ -131,12 +131,17 @@ Fragment and ECH are mutually exclusive — fragment wins when `fragment.mode ==
 
 ```
 GET /stats/overview → 200 StatsOverview
-    { totals: { users, activeUsers, configs, backends: {total, active},
-                subscriptions: {total, active} },
-      configsPerDay: [{ date, count } × 7],
-      byProtocol: { vless, vmess, trojan, shadowsocks },
+    { users: { total, active, disabled, expired },
+      backends: { total, active },
+      configs: { total, byProtocol: { vless, vmess, trojan, shadowsocks } },
+      subscriptions: { total, active },
+      series: { configsPerDay: [{ date, count } × 7] },
       activity: [{ id, messageKey, params, at }] }
 ```
+
+User buckets are mutually exclusive and sum to `total`: `active` = enabled
+and not expired, `disabled` = manually disabled, `expired` = enabled but past
+`expiryAt`.
 
 `activity[].messageKey` is an i18n key (e.g. `"dashboard.activity.userCreated"`) — the API stores semantic events, the client renders them translated.
 
