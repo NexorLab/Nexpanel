@@ -1,0 +1,22 @@
+{
+  "name": "@nexpanel/panel-worker",
+  "version": "0.1.0",
+  "description": "Serves the built panel and proxies /api to the API worker",
+  "main": "./src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run --passWithNoTests"
+  },
+  "keywords": [],
+  "author": "",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250907.0",
+    "typescript": "~6.0.2",
+    "wrangler": "^4.42.0"
+  }
+}
