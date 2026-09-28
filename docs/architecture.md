@@ -43,6 +43,15 @@ Cloudflare Worker (apps/api, Hono)
 
 The SPA is static — served from Workers Assets or any CDN — and talks to the API only through the versioned `/api/v1` contract.
 
+### The panel worker proxy
+
+In the Cloudflare phase the SPA and the API are **two workers** behind one origin. `apps/panel-worker` serves the built assets and forwards the API-owned paths to `apps/api` over a service binding (`apps/panel-worker/src/index.ts`, `API_PREFIXES`):
+
+- `/api/…` — the panel's JSON contract.
+- `/sub/:token` — public subscription delivery. The panel hands out subscription URLs on its own origin, so this path must be proxied too; missing it silently resolves a copied link to `index.html`.
+
+Anything not under those prefixes is an asset or an SPA route. The service binding — not an outbound `fetch` — is deliberate: worker-to-worker calls to `*.workers.dev` are blocked by Cloudflare (error 1042), and the binding keeps the request on-platform.
+
 ## Runtime topology (self-hosted phase)
 
 Only two things change:

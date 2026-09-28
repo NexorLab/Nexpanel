@@ -5,13 +5,8 @@
  *
  * The panel calls the API with relative paths only (docs/architecture.md),
  * so production serves both from one origin. Workers Assets serves the
- * static files; this worker handles everything Assets does not, which is
- * exactly two kinds of traffic:
- *
- *   /api/…  → forwarded to the nexpanel-api worker over a service binding
- *            (same-origin from the browser's point of view, so no CORS
- *            preflight is ever needed)
- *   other  → an SPA route, served index.html through the ASSETS binding
+ * static files; this worker forwards the API-owned paths (API_PREFIXES) and
+ * serves everything else as an SPA route through the ASSETS binding.
  *
  * The API is reached through a *service binding*, not an outbound fetch.
  * Worker-to-worker fetches over *.workers.dev are blocked by Cloudflare
@@ -20,7 +15,17 @@
  * scaled, monitored and later re-pointed at a self-hosted origin on its own.
  */
 
-const API_PREFIX = "/api/";
+/**
+ * Paths the API worker owns, served from this origin so clients never need
+ * a second host. Everything else is an asset or an SPA route.
+ *
+ * `/api/…` is the panel's own JSON API. `/sub/:token` is the public
+ * subscription delivery endpoint (apps/api/src/routes/sub.ts) — proxy
+ * clients fetch it to import configs, and it must stay reachable on the
+ * same origin the panel hands out, otherwise the copied link resolves to
+ * index.html instead of the subscription body.
+ */
+const API_PREFIXES = ["/api/", "/sub/"];
 
 interface PanelEnv {
   /** Workers Assets binding (wrangler.jsonc → assets.binding). */
@@ -33,7 +38,7 @@ export default {
   async fetch(request: Request, env: PanelEnv): Promise<Response> {
     const url = new URL(request.url);
 
-    if (url.pathname.startsWith(API_PREFIX)) {
+    if (API_PREFIXES.some((prefix) => url.pathname.startsWith(prefix))) {
       return proxyToApi(request, env);
     }
 
