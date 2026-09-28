@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "nexpanel-panel",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "../panel/dist",
+    "binding": "ASSETS",
+    // Unknown paths are SPA routes (react-router) — serve index.html so
+    // deep links and refreshes work.
+    "not_found_handling": "single-page-application"
+  },
+  "services": [
+    {
+      // The panel reaches the API through a service binding rather than an
+      // outbound https fetch — worker→worker calls to *.workers.dev are
+      // blocked by Cloudflare, and this keeps the request on-platform.
+      "binding": "API",
+      "service": "nexpanel-api"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}

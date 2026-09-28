@@ -8,7 +8,7 @@
     {
       "binding": "DB",
       "database_name": "nexpanel-db",
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "466a989a-cab2-4d23-9430-a926e1c40710",
       "migrations_dir": "../../database/migrations"
     }
   ],
