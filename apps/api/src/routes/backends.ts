@@ -1,22 +1,27 @@
 import { Hono } from "hono";
-import { NotFoundError, ValidationError, type Backend } from "@nexpanel/core";
+import {
+  NotFoundError,
+  ValidationError,
+  isValidHost,
+  type Backend,
+} from "@nexpanel/core";
 import type { AppEnv } from "../env";
 import { jsonError } from "../errors";
 import { requireAuth } from "../middleware/auth";
 import { createRepositories } from "../storage/d1";
+import { rebuildBackendConfigs } from "../services/configs";
 
 /**
  * /api/v1/backends — upstream proxy servers.
  *
  * GET    /         list (?status=&protocol=)
  * POST   /         create backend
- * PATCH  /:id      update backend
+ * PATCH  /:id      update backend, then refresh derived config URIs
  * DELETE /:id      delete backend (cascades configs)
  * POST   /:id/test best-effort reachability probe → { latencyMs }
  *
- * URIs of derived configs are denormalized: after PATCH, clients call
- * POST /configs/:id/rebuild (or generate) to refresh them — the API
- * never rewrites URIs implicitly.
+ * URIs of derived configs are denormalized; PATCH rebuilds them here so
+ * a host/port/transport/status change reaches subscriptions immediately.
  */
 
 const PROTOCOLS = ["vless", "vmess", "trojan", "shadowsocks"] as const;
@@ -56,9 +61,30 @@ function requireName(value: unknown): string {
   return value.trim();
 }
 
+/**
+ * Reject anything that isn't a bare hostname/IP. Host goes straight into
+ * the authority of a config URI (`vless://uuid@host:port`), so a scheme
+ * or path here makes proxy clients misparse it: v2rayNG splits on the
+ * first `://` and reads the scheme as the address, which surfaces as an
+ * empty address and port in the client's config editor.
+ */
 function requireHost(value: unknown): string {
   const host = optionalString(value, "host");
-  if (!host) throw new ValidationError("host is required.");
+  if (host === null) throw new ValidationError("host is required.");
+  if (!isValidHost(host)) {
+    throw new ValidationError("host must be a hostname or IP address without a scheme, port or path.");
+  }
+  return host;
+}
+
+function optionalHost(value: unknown, field: string): string | null {
+  const host = optionalString(value, field);
+  if (host === null) return null;
+  if (!isValidHost(host)) {
+    throw new ValidationError(
+      `${field} must be a hostname or IP address without a scheme, port or path.`,
+    );
+  }
   return host;
 }
 
@@ -78,8 +104,8 @@ function parseCreateBody(body: Record<string, unknown>): BackendFields {
     port: requirePort(body.port),
     transport: oneOf(body.transport, TRANSPORTS, "transport"),
     security: oneOf(body.security, SECURITIES, "security"),
-    sni: optionalString(body.sni, "sni"),
-    hostHeader: optionalString(body.hostHeader, "hostHeader"),
+    sni: optionalHost(body.sni, "sni"),
+    hostHeader: optionalHost(body.hostHeader, "hostHeader"),
     path: optionalString(body.path, "path"),
     serviceName: optionalString(body.serviceName, "serviceName"),
     uuid: optionalString(body.uuid, "uuid"),
@@ -108,15 +134,15 @@ function parsePatchBody(body: Record<string, unknown>): Partial<BackendFields> {
   if (body.port !== undefined) patch.port = requirePort(body.port);
   if (body.transport !== undefined) patch.transport = oneOf(body.transport, TRANSPORTS, "transport");
   if (body.security !== undefined) patch.security = oneOf(body.security, SECURITIES, "security");
-  if (body.sni !== undefined) patch.sni = optionalString(body.sni, "sni");
-  if (body.hostHeader !== undefined) patch.hostHeader = optionalString(body.hostHeader, "hostHeader");
+  if (body.sni !== undefined) patch.sni = optionalHost(body.sni, "sni");
+  if (body.hostHeader !== undefined) patch.hostHeader = optionalHost(body.hostHeader, "hostHeader");
   if (body.path !== undefined) patch.path = optionalString(body.path, "path");
   if (body.serviceName !== undefined) patch.serviceName = optionalString(body.serviceName, "serviceName");
   if (body.uuid !== undefined) patch.uuid = optionalString(body.uuid, "uuid");
   if (body.password !== undefined) patch.password = optionalString(body.password, "password");
   if (body.method !== undefined) patch.method = optionalString(body.method, "method");
   if (body.realityPublicKey !== undefined) {
-    patch.realityPublicKey = optionalString(body.realityPublicKey, "realityPublicKey");
+    patch.realityPublicKey = optionalHost(body.realityPublicKey, "realityPublicKey");
   }
   if (body.realityShortId !== undefined) {
     patch.realityShortId = optionalString(body.realityShortId, "realityShortId");
@@ -166,6 +192,22 @@ backendRoutes.patch("/:id", async (c) => {
 
   const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
   const backend = await repos.backends.update(id, parsePatchBody(body));
+
+  // configs.uri is denormalized — refresh every derived config so a
+  // host/port/transport/status change reaches subscriptions immediately,
+  // instead of requiring a manual rebuild per config.
+  const { data: derived } = await repos.configs.list({
+    backendId: id,
+    page: 1,
+    perPage: 1000,
+  });
+  for (const config of await rebuildBackendConfigs(
+    derived,
+    backend,
+    repos.users.getById,
+  )) {
+    await repos.configs.upsert(config);
+  }
 
   await repos.activity.record({
     id: crypto.randomUUID(),

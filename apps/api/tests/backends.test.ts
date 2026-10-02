@@ -133,4 +133,67 @@ describe("backends", () => {
     const configs = await authed("GET", `/api/v1/configs?backendId=${backend.id}`, token);
     expect(((await configs.json()) as { data: unknown[] }).data).toHaveLength(0);
   });
+
+  it("rewrites derived config URIs when host/port change (bug B regression)", async () => {
+    const { token } = await setupOwner(app, env);
+    const user = await createUser(app, env, token);
+    const backend = await createBackend(app, env, token, { host: "old.example.com", port: 443 });
+    const before = await generateConfig(app, env, token, user.id, backend.id);
+    expect(before.uri).toContain("old.example.com:443");
+
+    // Edit the backend; the derived config URI must follow.
+    const patched = await authed("PATCH", `/api/v1/backends/${backend.id}`, token, {
+      host: "new.example.com",
+      port: 8443,
+    });
+    expect(patched.status).toBe(200);
+
+    const configs = (await (await authed("GET", `/api/v1/configs?backendId=${backend.id}`, token)).json()) as {
+      data: { id: string; uri: string }[];
+    };
+    expect(configs.data).toHaveLength(1);
+    const after = configs.data[0];
+    expect(after.id).toBe(before.id); // same row, updated in place
+    expect(after.uri).toContain("new.example.com:8443");
+    expect(after.uri).not.toContain("old.example.com");
+  });
+
+  it("marks derived configs inactive when the backend is disabled", async () => {
+    const { token } = await setupOwner(app, env);
+    const user = await createUser(app, env, token);
+    const backend = await createBackend(app, env, token);
+    const before = await generateConfig(app, env, token, user.id, backend.id);
+    expect(before.isActive).toBe(true);
+
+    await authed("PATCH", `/api/v1/backends/${backend.id}`, token, { status: "disabled" });
+
+    const configs = (await (await authed("GET", `/api/v1/configs?backendId=${backend.id}`, token)).json()) as {
+      data: { isActive: boolean }[];
+    };
+    expect(configs.data).toHaveLength(1);
+    expect(configs.data[0].isActive).toBe(false);
+  });
+
+  it("rejects a scheme in host/sni/hostHeader (bug A regression)", async () => {
+    const { token } = await setupOwner(app, env);
+    // The exact shape that broke v2rayNG: a workers.dev URL pasted whole.
+    const created = await authed("POST", "/api/v1/backends", token, {
+      ...VALID_BODY,
+      host: "https://nexpanel-panel.nexpanelpro.workers.dev",
+    });
+    expect(created.status).toBe(400);
+
+    // The same guard applies on PATCH, and to sni / hostHeader too.
+    const backend = await createBackend(app, env, token);
+    expect(
+      (
+        await authed("PATCH", `/api/v1/backends/${backend.id}`, token, { sni: "https://example.com" })
+      ).status,
+    ).toBe(400);
+    expect(
+      (
+        await authed("PATCH", `/api/v1/backends/${backend.id}`, token, { hostHeader: "https://example.com" })
+      ).status,
+    ).toBe(400);
+  });
 });
