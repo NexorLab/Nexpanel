@@ -66,6 +66,7 @@ export class ValidationError extends AppError {
 }
 
 export * from "./domain/types";
+export * from "./domain/hosts";
 export * from "./protocols/uri";
 export * from "./crypto/passwords";
 export * from "./crypto/jwt";
