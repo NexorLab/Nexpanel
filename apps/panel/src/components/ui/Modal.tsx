@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import "./Modal.css";
@@ -22,36 +22,51 @@ export default function Modal({
   footer,
   size = "md",
 }: ModalProps) {
+  // Stable identity: parents pass inline arrow functions, so `onClose` would
+  // otherwise change on every render and re-trigger the effect below — which
+  // steals focus from the input the user is typing into (one char, then re-click).
+  const handleClose = useCallback(() => onClose(), [onClose]);
+
+  // Only focus the modal when it *opens*. Re-running on every render yanks focus
+  // away from a text input the user is actively typing in.
+  const previousOpen = useRef(open);
+
   useEffect(() => {
     if (!open) {
+      previousOpen.current = false;
       return;
     }
 
+    const isOpening = !previousOpen.current;
+    previousOpen.current = true;
+
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        onClose();
+        handleClose();
       }
     }
 
     document.addEventListener("keydown", onKeyDown);
     document.body.style.overflow = "hidden";
 
-    // Focus the modal container for keyboard users
-    const modal = document.querySelector(".modal-box");
-    (modal as HTMLElement | null)?.focus();
+    // Focus the modal container for keyboard users — only on open.
+    if (isOpening) {
+      const modal = document.querySelector(".modal-box");
+      (modal as HTMLElement | null)?.focus();
+    }
 
     return () => {
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = "";
     };
-  }, [open, onClose]);
+  }, [open, handleClose]);
 
   if (!open) {
     return null;
   }
 
   return createPortal(
-    <div className="modal-backdrop" onMouseDown={onClose}>
+    <div className="modal-backdrop" onMouseDown={handleClose}>
       <div
         className={`modal-box modal-size-${size}`}
         role="dialog"
