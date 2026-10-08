@@ -150,7 +150,15 @@ function yamlScalar(value: unknown): string {
   return JSON.stringify(String(value));
 }
 
-/** Recursive emitter for the plain maps this module builds. */
+/**
+ * Recursive emitter for the plain maps this module builds.
+ *
+ * `indent` is the column where this node's key starts. Array item
+ * entries carry a 2-char marker ("- " or "  ") at that column, so their
+ * *content* sits 4 columns in — children must be told that, otherwise a
+ * nested map under an array item (proxies: - { ech-opts: {...} }) lands
+ * its children flush with the parent key and yields invalid YAML.
+ */
 function emitYamlNode(key: string, value: unknown, indent: number, marker = ""): string[] {
   const pad = " ".repeat(indent);
   const head = `${pad}${marker}${key}:`;
@@ -168,7 +176,7 @@ function emitYamlNode(key: string, value: unknown, indent: number, marker = ""):
           ([, v]) => v !== undefined,
         );
         entries.forEach(([entryKey, entryValue], index) => {
-          lines.push(...emitYamlNode(entryKey, entryValue, indent + 2, index === 0 ? "- " : "  "));
+          lines.push(...emitYamlNode(entryKey, entryValue, indent + 4, index === 0 ? "- " : "  "));
         });
       }
     }
