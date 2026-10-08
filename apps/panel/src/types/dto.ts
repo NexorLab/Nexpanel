@@ -47,6 +47,8 @@ export interface Backend {
   realityShortId: string | null;
   fingerprint: string | null;
   allowInsecure: boolean;
+  fragment: FragmentSettings;
+  ech: EchSettings;
   status: BackendStatus;
   sortOrder: number;
   createdAt: number;

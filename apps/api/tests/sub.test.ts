@@ -100,6 +100,53 @@ describe("GET /sub/:token (public delivery)", () => {
     expect(((await response.json()) as { error: { code: string } }).error.code).toBe("NOT_FOUND");
   });
 
+  it("emits ECH in sing-box output when the backend enables it", async () => {
+    const { token, user } = await seed();
+    const backend = await createBackend(app, env, token, {
+      ech: { enabled: true, serverName: "ech.example.com" },
+    });
+    await generateConfig(app, env, token, user.id, backend.id);
+    const subscription = await createSubscription(app, env, token, user.id);
+
+    const response = await app.request(`/sub/${subscription.token}?format=singbox`, {}, env);
+    const doc = JSON.parse(await response.text()) as {
+      dns: { rules: { domain_suffix?: string[]; query_type?: string[]; server?: string }[] };
+      outbounds: { tls?: { ech?: { enabled: boolean; query_server_name: string } } }[];
+    };
+
+    const tls = doc.outbounds.find((outbound) => outbound.tls?.ech)?.tls;
+    expect(tls?.ech).toEqual({ enabled: true, query_server_name: "ech.example.com" });
+
+    // The HTTPS record must resolve direct, not through the tunnel.
+    expect(doc.dns.rules).toContainEqual({
+      domain_suffix: ["ech.example.com"],
+      query_type: ["HTTPS"],
+      action: "route",
+      server: "dns-direct",
+    });
+  });
+
+  it("omits ECH when the backend runs fragment instead", async () => {
+    const { token, user } = await seed();
+    const backend = await createBackend(app, env, token, {
+      fragment: { mode: "custom" },
+      ech: { enabled: true, serverName: "ech.example.com" },
+    });
+    await generateConfig(app, env, token, user.id, backend.id);
+    const subscription = await createSubscription(app, env, token, user.id);
+
+    const response = await app.request(`/sub/${subscription.token}?format=singbox`, {}, env);
+    const doc = JSON.parse(await response.text()) as {
+      outbounds: { tag?: string; tls?: { ech?: unknown; record_fragment?: boolean } }[];
+    };
+    // Tag, not the first TLS-bearing outbound — the seeded backend also
+    // carries TLS and would mask the fragment backend's behaviour.
+    const tls = doc.outbounds.find((outbound) => outbound.tag?.startsWith(backend.name))?.tls;
+
+    expect(tls?.ech).toBeUndefined();
+    expect(tls?.record_fragment).toBe(true);
+  });
+
   it("404s once the subscription expires", async () => {
     const { token, subscription } = await seed();
     const past = 1; // unix second in the past

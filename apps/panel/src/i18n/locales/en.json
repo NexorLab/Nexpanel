@@ -216,7 +216,23 @@
       "realityPublicKey": "Reality public key",
       "realityShortId": "Reality short ID",
       "allowInsecure": "Allow insecure",
-      "enabled": "Backend enabled"
+      "enabled": "Backend enabled",
+      "sectionNetwork": "Network",
+      "networkNeedsTls": "Fragmentation and ECH are TLS features — enable TLS or REALITY to use them.",
+      "fragmentMode": "Fragmentation",
+      "fragmentModeOff": "Off",
+      "fragmentModeCustom": "Custom",
+      "fragmentPackets": "Fragment packets",
+      "fragmentLength": "Fragment length (bytes)",
+      "fragmentLengthHint": "Split the TLS Client Hello across this byte range.",
+      "fragmentDelay": "Fragment delay (ms)",
+      "fragmentDelayHint": "Pause between fragments, as a min–max range.",
+      "fragmentMaxSplit": "Max split",
+      "fragmentMaxSplitHint": "Most chunks to split into; 0 for no limit.",
+      "echEnable": "Encrypted Client Hello (ECH)",
+      "echServerName": "ECH server name",
+      "echServerNameHint": "The domain publishing the ECH record the client will fetch.",
+      "echDisabledByFragment": "ECH is ignored while fragmentation is on — fragmentation takes precedence."
     },
     "actions": {
       "edit": "Edit",
@@ -376,28 +392,6 @@
       "saved": "Settings saved"
     },
     "network": {
-      "fragment": {
-        "title": "Fragment (TLS fragmentation)",
-        "description": "Splits TLS ClientHello packets to bypass DPI. An active fragment overrides ECH.",
-        "mode": "Mode",
-        "modeOff": "Off",
-        "modeCustom": "Custom",
-        "packets": "Packets",
-        "length": "Length range (bytes)",
-        "lengthHint": "Bytes per fragment, 20–1000",
-        "delay": "Delay range (ms)",
-        "delayHint": "Delay between fragments, 0–5000",
-        "maxSplit": "Max split count",
-        "maxSplitHint": "Maximum number of fragments, 0 disables"
-      },
-      "ech": {
-        "title": "ECH & TCP Fast Open",
-        "enable": "Enable ECH",
-        "serverName": "ECH server name",
-        "disabledByFragment": "Fragment is enabled — ECH is ignored.",
-        "tfo": "TCP Fast Open",
-        "tfoHint": "Cuts one round-trip from the connection handshake"
-      },
       "ping": {
         "title": "Connection tuning",
         "bestInterval": "Best ping interval (seconds)",
@@ -426,11 +420,15 @@
         "fakeDns": "Enable Fake DNS"
       },
       "errors": {
-        "validation": "Some network settings are invalid. Fix the highlighted fields.",
-        "conflict": "Fragment and ECH cannot be enabled together."
+        "validation": "Some network settings are invalid. Fix the highlighted fields."
       },
       "readOnly": "You have read-only access to network settings.",
-      "saved": "Network settings saved"
+      "saved": "Network settings saved",
+      "tfo": {
+        "title": "TCP Fast Open",
+        "enable": "Enable TCP Fast Open",
+        "hint": "Saves a round trip when opening connections. Some networks block it."
+      }
     },
     "security": {
       "changePassword": "Change password",

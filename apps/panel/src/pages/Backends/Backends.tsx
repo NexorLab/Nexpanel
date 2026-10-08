@@ -25,10 +25,12 @@ import { getApi } from "../../lib/api";
 import { useToast } from "../../contexts/ToastContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { useLanguage } from "../../contexts/LanguageContext";
-import type { Backend } from "../../types/dto";
+import type { Backend, FragmentSettings } from "../../types/dto";
 import "./Backends.css";
 
 type Protocol = Backend["protocol"];
+type FragmentMode = FragmentSettings["mode"];
+type FragmentPackets = FragmentSettings["packets"];
 
 const SS_METHODS = [
   "aes-256-gcm",
@@ -39,6 +41,7 @@ const SS_METHODS = [
 
 const TRANSPORTS: Backend["transport"][] = ["tcp", "ws", "grpc", "httpupgrade", "xhttp"];
 const SECURITY_OPTIONS: Backend["security"][] = ["none", "tls", "reality"];
+const PACKET_OPTIONS: FragmentPackets[] = ["tlshello", "hello-ice", "1-3"];
 
 interface BackendFormState {
   name: string;
@@ -59,6 +62,16 @@ interface BackendFormState {
   fingerprint: string;
   allowInsecure: boolean;
   enabled: boolean;
+  fragmentMode: FragmentMode;
+  fragmentPackets: FragmentPackets;
+  fragmentLengthMin: number;
+  fragmentLengthMax: number;
+  fragmentDelayMin: number;
+  fragmentDelayMax: number;
+  fragmentMaxSplitMin: number;
+  fragmentMaxSplitMax: number;
+  echEnabled: boolean;
+  echServerName: string;
 }
 
 function emptyForm(): BackendFormState {
@@ -81,6 +94,16 @@ function emptyForm(): BackendFormState {
     fingerprint: "chrome",
     allowInsecure: false,
     enabled: true,
+    fragmentMode: "none",
+    fragmentPackets: "tlshello",
+    fragmentLengthMin: 100,
+    fragmentLengthMax: 200,
+    fragmentDelayMin: 1,
+    fragmentDelayMax: 1,
+    fragmentMaxSplitMin: 0,
+    fragmentMaxSplitMax: 0,
+    echEnabled: false,
+    echServerName: "",
   };
 }
 
@@ -106,6 +129,17 @@ function toBackendBody(form: BackendFormState): Omit<
     realityShortId: form.realityShortId || null,
     fingerprint: form.fingerprint || null,
     allowInsecure: form.allowInsecure,
+    fragment: {
+      mode: form.fragmentMode,
+      packets: form.fragmentPackets,
+      lengthMin: form.fragmentLengthMin,
+      lengthMax: form.fragmentLengthMax,
+      delayMin: form.fragmentDelayMin,
+      delayMax: form.fragmentDelayMax,
+      maxSplitMin: form.fragmentMaxSplitMin,
+      maxSplitMax: form.fragmentMaxSplitMax,
+    },
+    ech: { enabled: form.echEnabled, serverName: form.echServerName.trim() },
     status: form.enabled ? "active" : "disabled",
   };
 }
@@ -130,6 +164,16 @@ function fromBackend(backend: Backend): BackendFormState {
     fingerprint: backend.fingerprint ?? "chrome",
     allowInsecure: backend.allowInsecure,
     enabled: backend.status === "active",
+    fragmentMode: backend.fragment.mode,
+    fragmentPackets: backend.fragment.packets,
+    fragmentLengthMin: backend.fragment.lengthMin,
+    fragmentLengthMax: backend.fragment.lengthMax,
+    fragmentDelayMin: backend.fragment.delayMin,
+    fragmentDelayMax: backend.fragment.delayMax,
+    fragmentMaxSplitMin: backend.fragment.maxSplitMin,
+    fragmentMaxSplitMax: backend.fragment.maxSplitMax,
+    echEnabled: backend.ech.enabled,
+    echServerName: backend.ech.serverName,
   };
 }
 
@@ -522,6 +566,132 @@ export default function Backends() {
               value={form.fingerprint}
               onChange={(event) => set("fingerprint", event.target.value)}
               dir="ltr"
+            />
+          )}
+
+          <div className="form-section-title">
+            {t("backends.form.sectionNetwork")}
+          </div>
+
+          {form.security === "none" && (
+            <p className="form-hint-inline">{t("backends.form.networkNeedsTls")}</p>
+          )}
+
+          {form.security !== "none" && (
+            <div className="form-field">
+              <span className="form-label">{t("backends.form.fragmentMode")}</span>
+              <SegmentedControl
+                value={form.fragmentMode}
+                onChange={(value) => set("fragmentMode", value as FragmentMode)}
+                options={[
+                  { value: "none", label: t("backends.form.fragmentModeOff") },
+                  { value: "custom", label: t("backends.form.fragmentModeCustom") },
+                ]}
+                ariaLabel={t("backends.form.fragmentMode")}
+              />
+            </div>
+          )}
+
+          {form.security !== "none" && form.fragmentMode === "custom" && (
+            <>
+              <Select
+                label={t("backends.form.fragmentPackets")}
+                value={form.fragmentPackets}
+                onChange={(event) =>
+                  set("fragmentPackets", event.target.value as FragmentPackets)
+                }
+                options={PACKET_OPTIONS.map((packets) => ({
+                  value: packets,
+                  label: packets,
+                }))}
+              />
+              <div className="form-grid-2">
+                <Input
+                  label={t("backends.form.fragmentLength")}
+                  hint={t("backends.form.fragmentLengthHint")}
+                  type="number"
+                  min={20}
+                  max={1000}
+                  value={form.fragmentLengthMin}
+                  onChange={(event) => set("fragmentLengthMin", Number(event.target.value))}
+                  dir="ltr"
+                />
+                <Input
+                  type="number"
+                  min={20}
+                  max={1000}
+                  value={form.fragmentLengthMax}
+                  onChange={(event) => set("fragmentLengthMax", Number(event.target.value))}
+                  dir="ltr"
+                />
+              </div>
+              <div className="form-grid-2">
+                <Input
+                  label={t("backends.form.fragmentDelay")}
+                  hint={t("backends.form.fragmentDelayHint")}
+                  type="number"
+                  min={0}
+                  max={5000}
+                  value={form.fragmentDelayMin}
+                  onChange={(event) => set("fragmentDelayMin", Number(event.target.value))}
+                  dir="ltr"
+                />
+                <Input
+                  type="number"
+                  min={0}
+                  max={5000}
+                  value={form.fragmentDelayMax}
+                  onChange={(event) => set("fragmentDelayMax", Number(event.target.value))}
+                  dir="ltr"
+                />
+              </div>
+              <div className="form-grid-2">
+                <Input
+                  label={t("backends.form.fragmentMaxSplit")}
+                  hint={t("backends.form.fragmentMaxSplitHint")}
+                  type="number"
+                  min={0}
+                  max={20}
+                  value={form.fragmentMaxSplitMin}
+                  onChange={(event) => set("fragmentMaxSplitMin", Number(event.target.value))}
+                  dir="ltr"
+                />
+                <Input
+                  type="number"
+                  min={0}
+                  max={20}
+                  value={form.fragmentMaxSplitMax}
+                  onChange={(event) => set("fragmentMaxSplitMax", Number(event.target.value))}
+                  dir="ltr"
+                />
+              </div>
+            </>
+          )}
+
+          {form.security === "tls" && (
+            <div className="form-field">
+              <Switch
+                checked={form.echEnabled}
+                onChange={(checked) => set("echEnabled", checked)}
+                label={t("backends.form.echEnable")}
+              />
+              {form.fragmentMode === "custom" && (
+                <p className="form-hint-inline">
+                  {t("backends.form.echDisabledByFragment")}
+                </p>
+              )}
+            </div>
+          )}
+
+          {form.security === "tls" && form.echEnabled && (
+            <Input
+              label={t("backends.form.echServerName")}
+              hint={t("backends.form.echServerNameHint")}
+              value={form.echServerName}
+              onChange={(event) => set("echServerName", event.target.value)}
+              dir="ltr"
+              placeholder="example.com"
+              required
             />
           )}
 

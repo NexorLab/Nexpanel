@@ -1,10 +1,9 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Globe, Lock, Network, Radio, Route, Server, Waypoints } from "lucide-react";
+import { Globe, Network, Radio, Route, Server, Waypoints } from "lucide-react";
 import Badge from "../../components/ui/Badge";
 import Button from "../../components/ui/Button";
 import Card from "../../components/ui/Card";
 import Input from "../../components/ui/Input";
-import SegmentedControl from "../../components/ui/SegmentedControl";
 import Select from "../../components/ui/Select";
 import Switch from "../../components/ui/Switch";
 import { useApi } from "../../hooks/useApi";
@@ -13,8 +12,6 @@ import { DEFAULT_SETTINGS } from "../../lib/settings";
 import { useToast } from "../../contexts/ToastContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import type {
-  FragmentMode,
-  FragmentPackets,
   NetworkSettings,
   PanelSettings,
   TlsFingerprint,
@@ -23,8 +20,6 @@ import type {
 interface NetworkTabProps {
   canEdit: boolean;
 }
-
-const PACKET_OPTIONS: FragmentPackets[] = ["tlshello", "hello-ice", "1-3"];
 
 const FINGERPRINTS: TlsFingerprint[] = [
   "chrome",
@@ -94,16 +89,6 @@ export default function NetworkTab({ canEdit }: NetworkTabProps) {
     setPortsInvalid(false);
   }, [data]);
 
-  function setFragmentField<K extends keyof NetworkSettings["fragment"]>(
-    key: K,
-    value: NetworkSettings["fragment"][K],
-  ) {
-    setNetwork((current) => ({
-      ...current,
-      fragment: { ...current.fragment, [key]: value },
-    }));
-  }
-
   function setDnsField<K extends keyof NetworkSettings["dns"]>(
     key: K,
     value: NetworkSettings["dns"][K],
@@ -122,20 +107,6 @@ export default function NetworkTab({ canEdit }: NetworkTabProps) {
       ...current,
       customCdn: { ...current.customCdn, [key]: value },
     }));
-  }
-
-  function setEchField<K extends keyof NetworkSettings["ech"]>(
-    key: K,
-    value: NetworkSettings["ech"][K],
-  ) {
-    setNetwork((current) => ({
-      ...current,
-      ech: { ...current.ech, [key]: value },
-    }));
-  }
-
-  function handleModeChange(value: string) {
-    setFragmentField("mode", value as FragmentMode);
   }
 
   async function handleSave(event: FormEvent) {
@@ -166,18 +137,13 @@ export default function NetworkTab({ canEdit }: NetworkTabProps) {
       setPortsText(result.network.ports.join(", "));
       toast.push({ type: "success", title: t("settings.network.saved") });
     } catch (error) {
-      const message =
-        error instanceof Error && error.message === "FRAGMENT_ECH_CONFLICT"
-          ? t("settings.network.errors.conflict")
-          : t("settings.network.errors.validation");
+      const message = t("settings.network.errors.validation");
       setFormError(message);
       toast.push({ type: "error", title: message });
     } finally {
       setSaving(false);
     }
   }
-
-  const fragmentOn = network.fragment.mode === "custom";
 
   return (
     <form onSubmit={handleSave} className="settings-stack">
@@ -190,161 +156,19 @@ export default function NetworkTab({ canEdit }: NetworkTabProps) {
       <Card className="settings-card">
         <h3 className="settings-card-title">
           <Waypoints size={16} />
-          {t("settings.network.fragment.title")}
-        </h3>
-        <p className="settings-card-subtitle">{t("settings.network.fragment.description")}</p>
-        <div className="settings-form">
-          <div className="settings-field">
-            <span className="settings-field-label">
-              {t("settings.network.fragment.mode")}
-            </span>
-            <SegmentedControl
-              value={network.fragment.mode}
-              onChange={handleModeChange}
-              options={[
-                { value: "none", label: t("settings.network.fragment.modeOff") },
-                { value: "custom", label: t("settings.network.fragment.modeCustom") },
-              ]}
-              ariaLabel={t("settings.network.fragment.mode")}
-            />
-          </div>
-
-          {fragmentOn && (
-            <>
-              <div className="settings-grid-2">
-                <Select
-                  label={t("settings.network.fragment.packets")}
-                  value={network.fragment.packets}
-                  onChange={(event) =>
-                    setFragmentField("packets", event.target.value as FragmentPackets)
-                  }
-                  options={PACKET_OPTIONS.map((value) => ({ value, label: value }))}
-                  disabled={!canEdit}
-                />
-              </div>
-              <div className="settings-grid-2">
-                <Input
-                  label={t("settings.network.fragment.length")}
-                  hint={t("settings.network.fragment.lengthHint")}
-                  type="number"
-                  min={20}
-                  max={1000}
-                  value={network.fragment.lengthMin}
-                  onChange={(event) =>
-                    setFragmentField("lengthMin", Number(event.target.value))
-                  }
-                  disabled={!canEdit}
-                  dir="ltr"
-                />
-                <Input
-                  label=" "
-                  type="number"
-                  min={20}
-                  max={1000}
-                  value={network.fragment.lengthMax}
-                  onChange={(event) =>
-                    setFragmentField("lengthMax", Number(event.target.value))
-                  }
-                  disabled={!canEdit}
-                  dir="ltr"
-                />
-              </div>
-              <div className="settings-grid-2">
-                <Input
-                  label={t("settings.network.fragment.delay")}
-                  hint={t("settings.network.fragment.delayHint")}
-                  type="number"
-                  min={0}
-                  max={5000}
-                  value={network.fragment.delayMin}
-                  onChange={(event) =>
-                    setFragmentField("delayMin", Number(event.target.value))
-                  }
-                  disabled={!canEdit}
-                  dir="ltr"
-                />
-                <Input
-                  label=" "
-                  type="number"
-                  min={0}
-                  max={5000}
-                  value={network.fragment.delayMax}
-                  onChange={(event) =>
-                    setFragmentField("delayMax", Number(event.target.value))
-                  }
-                  disabled={!canEdit}
-                  dir="ltr"
-                />
-              </div>
-              <div className="settings-grid-2">
-                <Input
-                  label={t("settings.network.fragment.maxSplit")}
-                  hint={t("settings.network.fragment.maxSplitHint")}
-                  type="number"
-                  min={0}
-                  max={20}
-                  value={network.fragment.maxSplitMin}
-                  onChange={(event) =>
-                    setFragmentField("maxSplitMin", Number(event.target.value))
-                  }
-                  disabled={!canEdit}
-                  dir="ltr"
-                />
-                <Input
-                  label=" "
-                  type="number"
-                  min={0}
-                  max={20}
-                  value={network.fragment.maxSplitMax}
-                  onChange={(event) =>
-                    setFragmentField("maxSplitMax", Number(event.target.value))
-                  }
-                  disabled={!canEdit}
-                  dir="ltr"
-                />
-              </div>
-            </>
-          )}
-        </div>
-      </Card>
-
-      <Card className="settings-card">
-        <h3 className="settings-card-title">
-          <Lock size={16} />
-          {t("settings.network.ech.title")}
+          {t("settings.network.tfo.title")}
         </h3>
         <div className="settings-form">
-          <div className="settings-field">
-            <Switch
-              checked={network.ech.enabled}
-              onChange={(checked) => setEchField("enabled", checked)}
-              label={t("settings.network.ech.enable")}
-              disabled={!canEdit || fragmentOn}
-            />
-            {fragmentOn && (
-              <p className="settings-field-hint-inline">
-                {t("settings.network.ech.disabledByFragment")}
-              </p>
-            )}
-          </div>
-          <Input
-            label={t("settings.network.ech.serverName")}
-            value={network.ech.serverName}
-            onChange={(event) => setEchField("serverName", event.target.value)}
-            disabled={!canEdit || !network.ech.enabled || fragmentOn}
-            dir="ltr"
-            placeholder="example.cloudflare-dns.com"
-          />
           <div className="settings-field">
             <Switch
               checked={network.tcpFastOpen}
               onChange={(checked) =>
                 setNetwork((current) => ({ ...current, tcpFastOpen: checked }))
               }
-              label={t("settings.network.ech.tfo")}
+              label={t("settings.network.tfo.enable")}
               disabled={!canEdit}
             />
-            <p className="settings-field-hint-inline">{t("settings.network.ech.tfoHint")}</p>
+            <p className="settings-field-hint-inline">{t("settings.network.tfo.hint")}</p>
           </div>
         </div>
       </Card>

@@ -196,4 +196,96 @@ describe("backends", () => {
       ).status,
     ).toBe(400);
   });
+
+  it("stores fragment on the backend and round-trips it", async () => {
+    const { token } = await setupOwner(app, env);
+    const backend = await createBackend(app, env, token, {
+      fragment: {
+        mode: "custom",
+        packets: "tlshello",
+        lengthMin: 100,
+        lengthMax: 200,
+        delayMin: 1,
+        delayMax: 1,
+        maxSplitMin: 0,
+        maxSplitMax: 0,
+      },
+    });
+    expect(backend.fragment).toEqual({
+      mode: "custom",
+      packets: "tlshello",
+      lengthMin: 100,
+      lengthMax: 200,
+      delayMin: 1,
+      delayMax: 1,
+      maxSplitMin: 0,
+      maxSplitMax: 0,
+    });
+  });
+
+  it("rejects fragment on a plaintext backend", async () => {
+    const { token } = await setupOwner(app, env);
+    const response = await authed("POST", "/api/v1/backends", token, {
+      ...VALID_BODY,
+      security: "none",
+      fragment: { mode: "custom" },
+    });
+    expect(response.status).toBe(400);
+  });
+
+  it("rejects ECH without a serverName", async () => {
+    const { token } = await setupOwner(app, env);
+    const response = await authed("POST", "/api/v1/backends", token, {
+      ...VALID_BODY,
+      ech: { enabled: true, serverName: "" },
+    });
+    expect(response.status).toBe(400);
+  });
+
+  it("rejects ECH on a non-TLS backend", async () => {
+    const { token } = await setupOwner(app, env);
+    const response = await authed("POST", "/api/v1/backends", token, {
+      ...VALID_BODY,
+      security: "none",
+      ech: { enabled: true, serverName: "ech.example.com" },
+    });
+    expect(response.status).toBe(400);
+  });
+
+  it("allows fragment + ECH together (fragment wins at render)", async () => {
+    // Per the BPB review, this is not a validation error — the renderer
+    // drops ECH when fragment is on. Saving both must succeed.
+    const { token } = await setupOwner(app, env);
+    const backend = await createBackend(app, env, token, {
+      fragment: { mode: "custom" },
+      ech: { enabled: true, serverName: "ech.example.com" },
+    });
+    expect(backend.fragment.mode).toBe("custom");
+    expect(backend.ech).toEqual({ enabled: true, serverName: "ech.example.com" });
+  });
+
+  it("rejects ECH on PATCH against a stored plaintext backend", async () => {
+    // Flipping ECH alone must still see the row's security.
+    const { token } = await setupOwner(app, env);
+    const backend = await createBackend(app, env, token, { security: "none" });
+    const response = await authed("PATCH", `/api/v1/backends/${backend.id}`, token, {
+      ech: { enabled: true, serverName: "ech.example.com" },
+    });
+    expect(response.status).toBe(400);
+  });
+
+  it("validates fragment ranges on the backend", async () => {
+    const { token } = await setupOwner(app, env);
+    const minOverMax = await authed("POST", "/api/v1/backends", token, {
+      ...VALID_BODY,
+      fragment: { lengthMin: 500, lengthMax: 100 },
+    });
+    expect(minOverMax.status).toBe(400);
+
+    const outOfRange = await authed("POST", "/api/v1/backends", token, {
+      ...VALID_BODY,
+      fragment: { lengthMin: 5, lengthMax: 100 },
+    });
+    expect(outOfRange.status).toBe(400);
+  });
 });

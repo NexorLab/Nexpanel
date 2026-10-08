@@ -1,5 +1,4 @@
 import {
-  DEFAULT_SETTINGS,
   mergeSettings,
   validateGeneralSettings,
   validateNetworkSettings,
@@ -9,6 +8,7 @@ import { Hono } from "hono";
 import type { AppEnv } from "../env";
 import { requireAuth, requireRole } from "../middleware/auth";
 import { createRepositories } from "../storage/d1";
+import { readSettings } from "../services/settings";
 
 /**
  * /api/v1/settings — instance-level panel settings stored as JSON rows
@@ -23,15 +23,6 @@ import { createRepositories } from "../storage/d1";
 export const settingsRoutes = new Hono<AppEnv>();
 
 settingsRoutes.use("*", requireAuth);
-
-async function readSettings(repos: ReturnType<typeof createRepositories>): Promise<PanelSettings> {
-  const storedGeneral = await repos.settings.get<PanelSettings["general"]>("general");
-  const storedNetwork = await repos.settings.get<PanelSettings["network"]>("network");
-  const patch: Partial<PanelSettings> = {};
-  if (storedGeneral) patch.general = storedGeneral;
-  if (storedNetwork) patch.network = storedNetwork;
-  return mergeSettings(DEFAULT_SETTINGS, patch);
-}
 
 settingsRoutes.get("/", async (c) => {
   const repos = createRepositories(c.env);
