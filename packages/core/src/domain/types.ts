@@ -1,4 +1,5 @@
 import type { AdminRole, Protocol, Security, Transport } from "../index";
+import type { EchSettings, FragmentSettings } from "../settings/index";
 
 /** Config-consumer account (a person/device that uses a proxy config). */
 export interface ConfigUser {
@@ -38,6 +39,13 @@ export interface Backend {
   realityShortId: string | null;
   fingerprint: string | null;
   allowInsecure: boolean;
+  /**
+   * TLS record fragmentation for this server (DPI circumvention). When
+   * active, ECH is not emitted — fragment takes precedence, as in BPB.
+   */
+  fragment: FragmentSettings;
+  /** Encrypted Client Hello. Requires security "tls" and a serverName. */
+  ech: EchSettings;
   status: "active" | "disabled";
   sortOrder: number;
   createdAt: number;

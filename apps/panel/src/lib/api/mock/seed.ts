@@ -6,6 +6,7 @@ import type {
   StatsOverview,
   Subscription,
 } from "../../../types/dto";
+import type { EchSettings, FragmentSettings } from "@nexpanel/core";
 
 function unixDaysAgo(days: number): number {
   return Math.floor(Date.now() / 1000) - days * 86400;
@@ -122,7 +123,7 @@ export const seedUsers: ConfigUser[] = [
   },
 ];
 
-export const seedBackends: Backend[] = [
+const SEED_BACKENDS: Omit<Backend, "fragment" | "ech">[] = [
   {
     id: "b-1",
     name: "CF-Worker-EU",
@@ -244,6 +245,36 @@ export const seedBackends: Backend[] = [
     updatedAt: unixDaysAgo(7),
   },
 ];
+
+/** Off-by-default network profile, matching the migration default. */
+const FRAGMENT_OFF: FragmentSettings = {
+  mode: "none",
+  packets: "tlshello",
+  lengthMin: 100,
+  lengthMax: 200,
+  delayMin: 1,
+  delayMax: 1,
+  maxSplitMin: 0,
+  maxSplitMax: 0,
+};
+const ECH_OFF: EchSettings = { enabled: false, serverName: "" };
+
+// Fragment/ECH describe the server, so the seed shows one of each on a
+// backend that can actually use them (both need TLS). b-2 demonstrates
+// fragmentation, b-3 ECH; the rest carry the defaults.
+const NETWORK_BY_BACKEND: Record<string, Partial<Backend>> = {
+  "b-2": {
+    fragment: { ...FRAGMENT_OFF, mode: "custom", lengthMin: 100, lengthMax: 200, delayMin: 1, delayMax: 1 },
+  },
+  "b-3": { ech: { enabled: true, serverName: "de1.nexpanel.example" } },
+};
+
+export const seedBackends: Backend[] = SEED_BACKENDS.map((backend) => ({
+  ...backend,
+  fragment: FRAGMENT_OFF,
+  ech: ECH_OFF,
+  ...NETWORK_BY_BACKEND[backend.id],
+}));
 
 const PROTOCOL_OF: Record<string, Backend["protocol"]> = Object.fromEntries(
   seedBackends.map((backend) => [backend.id, backend.protocol]),
