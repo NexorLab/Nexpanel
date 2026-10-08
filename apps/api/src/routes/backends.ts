@@ -4,6 +4,8 @@ import {
   ValidationError,
   isValidHost,
   type Backend,
+  type EchSettings,
+  type FragmentSettings,
 } from "@nexpanel/core";
 import type { AppEnv } from "../env";
 import { jsonError } from "../errors";
@@ -95,15 +97,122 @@ function requirePort(value: unknown): number {
   return value;
 }
 
+const FRAGMENT_PACKETS = ["tlshello", "hello-ice", "1-3"] as const;
+const FRAGMENT_MODES = ["none", "custom"] as const;
+
+/**
+ * Fragment settings for a backend. Validation mirrors the range checks in
+ * validateNetworkSettings, but reports backend-scoped codes so the panel can
+ * highlight the right form section.
+ */
+function parseFragment(value: unknown, security: Backend["security"]): FragmentSettings {
+  if (value === undefined || value === null) {
+    return { mode: "none", packets: "tlshello", lengthMin: 100, lengthMax: 200, delayMin: 1, delayMax: 1, maxSplitMin: 0, maxSplitMax: 0 };
+  }
+  if (typeof value !== "object") {
+    throw new ValidationError("fragment must be an object.");
+  }
+  const raw = value as Record<string, unknown>;
+  const mode = raw.mode === undefined ? "none" : oneOf(raw.mode, FRAGMENT_MODES, "fragment.mode");
+
+  const settings: FragmentSettings = {
+    mode,
+    packets: raw.packets === undefined ? "tlshello" : oneOf(raw.packets, FRAGMENT_PACKETS, "fragment.packets"),
+    lengthMin: requireBoundedInt(raw.lengthMin, "fragment.lengthMin", 20, 1000, 100),
+    lengthMax: requireBoundedInt(raw.lengthMax, "fragment.lengthMax", 20, 1000, 200),
+    delayMin: requireBoundedInt(raw.delayMin, "fragment.delayMin", 0, 5000, 1),
+    delayMax: requireBoundedInt(raw.delayMax, "fragment.delayMax", 0, 5000, 1),
+    maxSplitMin: requireBoundedInt(raw.maxSplitMin, "fragment.maxSplitMin", 0, 20, 0),
+    maxSplitMax: requireBoundedInt(raw.maxSplitMax, "fragment.maxSplitMax", 0, 20, 0),
+  };
+
+  if (settings.lengthMin > settings.lengthMax) {
+    throw new ValidationError("fragment.lengthMin must not exceed fragment.lengthMax.");
+  }
+  if (settings.delayMin > settings.delayMax) {
+    throw new ValidationError("fragment.delayMin must not exceed fragment.delayMax.");
+  }
+  if (settings.maxSplitMin > settings.maxSplitMax) {
+    throw new ValidationError("fragment.maxSplitMin must not exceed fragment.maxSplitMax.");
+  }
+
+  // Fragmentation rewrites the TLS Client Hello, so it needs a TLS session.
+  if (mode === "custom" && security === "none") {
+    throw new ValidationError("fragment requires security tls or reality.");
+  }
+  return settings;
+}
+
+/**
+ * ECH for a backend. ECH is a TLS extension, so it is rejected outright on
+ * plaintext; it also needs an explicit serverName — the record is published
+ * under that name, so an empty value would resolve nothing.
+ *
+ * Per the BPB review, fragment+ECH together is NOT rejected: when both are
+ * set, fragment wins at render time and ECH is simply omitted from the
+ * output, so there is no conflict error here.
+ */
+function parseEch(value: unknown, security: Backend["security"]): EchSettings {
+  if (value === undefined || value === null) {
+    return { enabled: false, serverName: "" };
+  }
+  if (typeof value !== "object") {
+    throw new ValidationError("ech must be an object.");
+  }
+  const raw = value as Record<string, unknown>;
+  const enabled = raw.enabled === undefined ? false : parseEnabled(raw.enabled, "ech.enabled");
+  const serverName = optionalString(raw.serverName, "ech.serverName") ?? "";
+
+  if (!enabled) {
+    // An unused serverName is harmless; keep it so toggling ECH back on
+    // doesn't wipe what the admin typed.
+    return { enabled: false, serverName };
+  }
+  if (security !== "tls") {
+    throw new ValidationError("ech requires security tls.");
+  }
+  if (serverName.trim().length === 0) {
+    throw new ValidationError("ech.serverName is required when ECH is enabled.");
+  }
+  if (!isValidHost(serverName)) {
+    throw new ValidationError("ech.serverName must be a hostname.");
+  }
+  return { enabled: true, serverName };
+}
+
+function parseEnabled(value: unknown, field: string): boolean {
+  if (typeof value !== "boolean") throw new ValidationError(`${field} must be a boolean.`);
+  return value;
+}
+
+/**
+ * Integer within [min, max], or fallback when the field is absent. Used for
+ * fragment ranges, which are optional at every level: absent ⇒ default.
+ */
+function requireBoundedInt(
+  value: unknown,
+  field: string,
+  min: number,
+  max: number,
+  fallback: number,
+): number {
+  if (value === undefined || value === null) return fallback;
+  if (typeof value !== "number" || !Number.isInteger(value) || value < min || value > max) {
+    throw new ValidationError(`${field} must be an integer between ${min} and ${max}.`);
+  }
+  return value;
+}
+
 /** Validates every field required for creation. */
 function parseCreateBody(body: Record<string, unknown>): BackendFields {
+  const security = oneOf(body.security, SECURITIES, "security");
   return {
     name: requireName(body.name),
     protocol: oneOf(body.protocol, PROTOCOLS, "protocol"),
     host: requireHost(body.host),
     port: requirePort(body.port),
     transport: oneOf(body.transport, TRANSPORTS, "transport"),
-    security: oneOf(body.security, SECURITIES, "security"),
+    security,
     sni: optionalHost(body.sni, "sni"),
     hostHeader: optionalHost(body.hostHeader, "hostHeader"),
     path: optionalString(body.path, "path"),
@@ -115,6 +224,8 @@ function parseCreateBody(body: Record<string, unknown>): BackendFields {
     realityShortId: optionalString(body.realityShortId, "realityShortId"),
     fingerprint: optionalString(body.fingerprint, "fingerprint"),
     allowInsecure: body.allowInsecure === undefined ? false : parseBoolean(body.allowInsecure),
+    fragment: parseFragment(body.fragment, security),
+    ech: parseEch(body.ech, security),
     status: body.status === undefined ? "active" : oneOf(body.status, STATUSES, "status"),
     sortOrder: 0,
   };
@@ -125,8 +236,18 @@ function parseBoolean(value: unknown): boolean {
   return value;
 }
 
-/** Validates only the fields present on a PATCH body. */
-function parsePatchBody(body: Record<string, unknown>): Partial<BackendFields> {
+/**
+ * Validates only the fields present on a PATCH body.
+ *
+ * ECH and fragment validation depend on `security`, which a PATCH may or may
+ * not change. The caller passes the *effective* security — the patched value
+ * when present, otherwise the stored row — so ECH-on-plaintext is caught even
+ * when the request flips ECH alone.
+ */
+function parsePatchBody(
+  body: Record<string, unknown>,
+  effectiveSecurity: Backend["security"],
+): Partial<BackendFields> {
   const patch: Partial<BackendFields> = {};
   if (body.name !== undefined) patch.name = requireName(body.name);
   if (body.protocol !== undefined) patch.protocol = oneOf(body.protocol, PROTOCOLS, "protocol");
@@ -149,6 +270,8 @@ function parsePatchBody(body: Record<string, unknown>): Partial<BackendFields> {
   }
   if (body.fingerprint !== undefined) patch.fingerprint = optionalString(body.fingerprint, "fingerprint");
   if (body.allowInsecure !== undefined) patch.allowInsecure = parseBoolean(body.allowInsecure);
+  if (body.fragment !== undefined) patch.fragment = parseFragment(body.fragment, effectiveSecurity);
+  if (body.ech !== undefined) patch.ech = parseEch(body.ech, effectiveSecurity);
   if (body.status !== undefined) patch.status = oneOf(body.status, STATUSES, "status");
   return patch;
 }
@@ -188,10 +311,14 @@ backendRoutes.post("/", async (c) => {
 backendRoutes.patch("/:id", async (c) => {
   const repos = createRepositories(c.env);
   const id = c.req.param("id");
-  if (!(await repos.backends.getById(id))) throw new NotFoundError("Backend");
+  const stored = await repos.backends.getById(id);
+  if (!stored) throw new NotFoundError("Backend");
 
   const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
-  const backend = await repos.backends.update(id, parsePatchBody(body));
+  // ECH/fragment validation depends on security, which this PATCH may change
+  // in the same request — validate against the security the row will have.
+  const effectiveSecurity = body.security === undefined ? stored.security : oneOf(body.security, SECURITIES, "security");
+  const backend = await repos.backends.update(id, parsePatchBody(body, effectiveSecurity));
 
   // configs.uri is denormalized — refresh every derived config so a
   // host/port/transport/status change reaches subscriptions immediately,
