@@ -132,6 +132,12 @@
   color: var(--color-text-secondary);
 }
 
+.form-hint-inline {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
 .form-section-title {
   font-size: var(--text-sm);
   font-weight: var(--fw-semibold);

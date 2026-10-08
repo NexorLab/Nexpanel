@@ -3,6 +3,7 @@ import { renderSubscriptionBody, type SubConfigSource } from "@nexpanel/core";
 import type { AppEnv } from "../env";
 import { jsonError } from "../errors";
 import { createRepositories } from "../storage/d1";
+import { readSettings } from "../services/settings";
 
 /**
  * Public subscription endpoint — the one route group that does NOT
@@ -61,10 +62,13 @@ subRoutes.get("/:token", async (c) => {
   );
   // One backends read total; a user's configs reference few backends.
   const byId = new Map((await repos.backends.list()).map((backend) => [backend.id, backend]));
+  // Panel-wide network settings (dns, fingerprint, tfo) feed the renderers;
+  // the backend row carries its own fragment/ECH.
+  const { network } = await readSettings(repos);
   const sources: SubConfigSource[] = [];
   for (const config of deliverable) {
     const backend = byId.get(config.backendId);
-    if (backend) sources.push({ config, backend, user });
+    if (backend) sources.push({ config, backend, user, network });
   }
 
   await repos.subscriptions.recordAccess(token);

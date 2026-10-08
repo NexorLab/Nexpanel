@@ -216,7 +216,23 @@
       "realityPublicKey": "کلید عمومی Reality",
       "realityShortId": "شناسه کوتاه Reality",
       "allowInsecure": "اجازه اتصال ناامن",
-      "enabled": "بک‌اند فعال باشد"
+      "enabled": "بک‌اند فعال باشد",
+      "sectionNetwork": "شبکه",
+      "networkNeedsTls": "فرگمنت و ECH ویژگی‌های TLS هستند — برای استفاده، TLS یا REALITY را فعال کنید.",
+      "fragmentMode": "فرگمنت‌سازی",
+      "fragmentModeOff": "خاموش",
+      "fragmentModeCustom": "دستی",
+      "fragmentPackets": "بسته‌های فرگمنت",
+      "fragmentLength": "طول فرگمنت (بایت)",
+      "fragmentLengthHint": "تقسیم Client Hello روی این بازه بایتی.",
+      "fragmentDelay": "تأخیر فرگمنت (میلی‌ثانیه)",
+      "fragmentDelayHint": "مکث بین فرگمنت‌ها، به‌صورت بازه کمینه–بیشینه.",
+      "fragmentMaxSplit": "حداکثر تقسیم",
+      "fragmentMaxSplitHint": "بیشترین تعداد بخش؛ 0 یعنی بدون محدودیت.",
+      "echEnable": "رمزنگاری Client Hello (ECH)",
+      "echServerName": "نام سرور ECH",
+      "echServerNameHint": "دامنه‌ای که رکورد ECH را برای دریافت کلاینت منتشر می‌کند.",
+      "echDisabledByFragment": "تا زمانی که فرگمنت روشن است ECH نادیده گرفته می‌شود — فرگمنت اولویت دارد."
     },
     "actions": {
       "edit": "ویرایش",
@@ -376,28 +392,6 @@
       "saved": "تنظیمات ذخیره شد"
     },
     "network": {
-      "fragment": {
-        "title": "فرگمنت (قطعه‌بندی TLS)",
-        "description": "بسته‌های ClientHello را قطعه‌قطعه می‌کند تا از DPI عبور کند. در صورت فعال بودن، فرگمنت بر ECH اولویت دارد.",
-        "mode": "حالت",
-        "modeOff": "خاموش",
-        "modeCustom": "سفارشی",
-        "packets": "الگوی بسته‌ها",
-        "length": "بازه طول (بایت)",
-        "lengthHint": "حجم هر قطعه، بین ۲۰ تا ۱۰۰۰",
-        "delay": "بازه تأخیر (میلی‌ثانیه)",
-        "delayHint": "تأخیر میان قطعات، بین ۰ تا ۵۰۰۰",
-        "maxSplit": "حداکثر تعداد قطعه",
-        "maxSplitHint": "بیشترین تعداد قطعه‌بندی، ۰ یعنی غیرفعال"
-      },
-      "ech": {
-        "title": "ECH و TCP Fast Open",
-        "enable": "فعال‌سازی ECH",
-        "serverName": "نام سرور ECH",
-        "disabledByFragment": "فرگمنت فعال است؛ ECH نادیده گرفته می‌شود.",
-        "tfo": "TCP Fast Open",
-        "tfoHint": "یک رفت‌وبرگشت از فرآیند برقراری اتصال کم می‌کند"
-      },
       "ping": {
         "title": "تنظیمات اتصال",
         "bestInterval": "فاصله تست بهترین پینگ (ثانیه)",
@@ -426,11 +420,15 @@
         "fakeDns": "فعال‌سازی Fake DNS"
       },
       "errors": {
-        "validation": "بخش‌هایی از تنظیمات شبکه نامعتبر است. فیلدهای مشخص‌شده را اصلاح کنید.",
-        "conflict": "فرگمنت و ECH نمی‌توانند هم‌زمان فعال باشند."
+        "validation": "بخش‌هایی از تنظیمات شبکه نامعتبر است. فیلدهای مشخص‌شده را اصلاح کنید."
       },
       "readOnly": "شما فقط دسترسی مشاهده به تنظیمات شبکه دارید.",
-      "saved": "تنظیمات شبکه ذخیره شد"
+      "saved": "تنظیمات شبکه ذخیره شد",
+      "tfo": {
+        "title": "TCP Fast Open",
+        "enable": "فعال‌سازی TCP Fast Open",
+        "hint": "یک رفت‌وبرگشت هنگام باز کردن اتصال را حذف می‌کند. در برخی شبکه‌ها مسدود است."
+      }
     },
     "security": {
       "changePassword": "تغییر رمز عبور",

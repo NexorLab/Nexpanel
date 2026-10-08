@@ -151,31 +151,6 @@ function loadSettings(): PanelSettings {
 }
 
 function assertValidNetwork(network: NetworkSettings): void {
-  const fragment = network.fragment;
-  const invalidLength =
-    !Number.isInteger(fragment.lengthMin) ||
-    !Number.isInteger(fragment.lengthMax) ||
-    fragment.lengthMin < 20 ||
-    fragment.lengthMax > 1000 ||
-    fragment.lengthMin > fragment.lengthMax;
-  if (invalidLength) throw new ConflictError("INVALID_FRAGMENT_LENGTH");
-
-  const invalidDelay =
-    !Number.isInteger(fragment.delayMin) ||
-    !Number.isInteger(fragment.delayMax) ||
-    fragment.delayMin < 0 ||
-    fragment.delayMax > 5000 ||
-    fragment.delayMin > fragment.delayMax;
-  if (invalidDelay) throw new ConflictError("INVALID_FRAGMENT_DELAY");
-
-  const invalidSplit =
-    !Number.isInteger(fragment.maxSplitMin) ||
-    !Number.isInteger(fragment.maxSplitMax) ||
-    fragment.maxSplitMin < 0 ||
-    fragment.maxSplitMax > 20 ||
-    fragment.maxSplitMin > fragment.maxSplitMax;
-  if (invalidSplit) throw new ConflictError("INVALID_FRAGMENT_SPLIT");
-
   if (!network.ports.every((port) => Number.isInteger(port) && port >= 1 && port <= 65535)) {
     throw new ConflictError("INVALID_PORTS");
   }
@@ -190,15 +165,6 @@ function assertValidNetwork(network: NetworkSettings): void {
 
   if (!network.dns.remote.startsWith("https://")) {
     throw new ConflictError("INVALID_DOH_URL");
-  }
-
-  const serverName = network.ech.serverName.trim();
-  if (serverName && !/^(?=.{1,253}$)([a-z0-9](-*[a-z0-9])*\.)+[a-z]{2,}$/i.test(serverName)) {
-    throw new ConflictError("INVALID_ECH_SERVER_NAME");
-  }
-
-  if (network.fragment.mode === "custom" && network.ech.enabled) {
-    throw new ConflictError("FRAGMENT_ECH_CONFLICT");
   }
 }
 
@@ -238,6 +204,30 @@ export function createMockAdapter(): ApiClient {
         backend.id !== exceptId && backend.name.toLowerCase() === name.toLowerCase(),
     );
     if (clash) throw new ConflictError("NAME_TAKEN");
+  }
+
+  /**
+   * Fragment/ECH checks mirrored from the API (routes/backends.ts
+   * parseFragment/parseEch) — the mock must fail the same shapes so the
+   * panel form shows the same errors before the backend is saved.
+   * Like the API, fragment+ECH together is allowed; fragment wins at
+   * render time, so there is no conflict error here either.
+   */
+  function assertValidBackendNetwork(
+    backend: Pick<Backend, "fragment" | "ech" | "security">,
+  ): void {
+    const { fragment, ech, security } = backend;
+    if (fragment.mode === "custom" && security === "none") {
+      throw new ConflictError("BACKEND_FRAGMENT_REQUIRES_TLS");
+    }
+    if (ech.enabled) {
+      if (security !== "tls") {
+        throw new ConflictError("BACKEND_ECH_REQUIRES_TLS");
+      }
+      if (!ech.serverName.trim()) {
+        throw new ConflictError("BACKEND_ECH_SERVER_NAME_REQUIRED");
+      }
+    }
   }
 
   function buildUri(user: ConfigUser, backend: Backend): string {
@@ -441,6 +431,11 @@ export function createMockAdapter(): ApiClient {
 
     async createBackend(body) {
       assertUniqueBackendName(body.name);
+      assertValidBackendNetwork({
+        fragment: body.fragment,
+        ech: body.ech,
+        security: body.security,
+      });
       const backend: Backend = {
         ...body,
         id: `b-${crypto.randomUUID().slice(0, 8)}`,
@@ -456,6 +451,12 @@ export function createMockAdapter(): ApiClient {
       const backend = backends.find((candidate) => candidate.id === id);
       if (!backend) throw new NotFoundError("BACKEND_NOT_FOUND");
       if (body.name) assertUniqueBackendName(body.name, id);
+      // Validate against the security the row will have after this patch.
+      assertValidBackendNetwork({
+        fragment: body.fragment ?? backend.fragment,
+        ech: body.ech ?? backend.ech,
+        security: body.security ?? backend.security,
+      });
 
       Object.assign(backend, body, { updatedAt: now() });
 
@@ -626,8 +627,6 @@ export function createMockAdapter(): ApiClient {
           network: {
             ...settings.network,
             ...body.network,
-            fragment: { ...settings.network.fragment, ...body.network.fragment },
-            ech: { ...settings.network.ech, ...body.network.ech },
             customCdn: { ...settings.network.customCdn, ...body.network.customCdn },
             dns: { ...settings.network.dns, ...body.network.dns },
           },

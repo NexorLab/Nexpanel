@@ -71,7 +71,9 @@ describe("settings", () => {
     expect(body.network.ports).toEqual([443]);
   });
 
-  it("409 FRAGMENT_ECH_CONFLICT when fragment custom + ech enabled", async () => {
+  it("ignores fragment/ech on network settings — they live on the backend", async () => {
+    // Fragment and ECH moved to per-backend fields (BPB parity), so a
+    // stale client sending them must not corrupt or conflict the section.
     const { token } = await setupOwner(app, env);
     const response = await json(
       "PATCH",
@@ -84,10 +86,12 @@ describe("settings", () => {
       },
       bearer(token),
     );
-    expect(response.status).toBe(409);
-    expect(((await response.json()) as { error: { code: string } }).error.code).toBe(
-      "FRAGMENT_ECH_CONFLICT",
-    );
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as {
+      network: { fragment?: unknown; ech?: unknown };
+    };
+    expect(body.network.fragment).toBeUndefined();
+    expect(body.network.ech).toBeUndefined();
   });
 
   it("400 INVALID_PORTS for out-of-range ports", async () => {

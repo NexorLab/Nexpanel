@@ -1,4 +1,5 @@
 import type { createApp } from "../src/app";
+import type { Backend } from "@nexpanel/core";
 import { bearer } from "./helpers";
 
 /**
@@ -15,10 +16,7 @@ export interface TestUser {
   username: string;
 }
 
-export interface TestBackend {
-  id: string;
-  name: string;
-}
+export type TestBackend = Backend;
 
 export async function createUser(
   app: App,

@@ -33,7 +33,6 @@ export interface FragmentSettings {
   maxSplitMax: number;
 }
 
-/** Ignored while fragment.mode is "custom" — fragment takes precedence (BPB parity). */
 export interface EchSettings {
   enabled: boolean;
   serverName: string;
@@ -54,8 +53,6 @@ export interface DnsSettings {
 }
 
 export interface NetworkSettings {
-  fragment: FragmentSettings;
-  ech: EchSettings;
   tcpFastOpen: boolean;
   /** seconds; later used as the url-test interval */
   bestPingInterval: number;
@@ -96,20 +93,6 @@ export const DEFAULT_SETTINGS: PanelSettings = {
     defaultExpiryDays: 90,
   },
   network: {
-    fragment: {
-      mode: "none",
-      packets: "tlshello",
-      lengthMin: 100,
-      lengthMax: 200,
-      delayMin: 1,
-      delayMax: 1,
-      maxSplitMin: 0,
-      maxSplitMax: 0,
-    },
-    ech: {
-      enabled: false,
-      serverName: "",
-    },
     tcpFastOpen: false,
     bestPingInterval: 30,
     customCdn: {
@@ -136,38 +119,6 @@ function invalid(message: string): never {
 
 /** Throws AppError with the mock adapter's machine codes. */
 export function validateNetworkSettings(network: NetworkSettings): void {
-  const fragment = network.fragment;
-
-  const invalidLength =
-    !Number.isInteger(fragment.lengthMin) ||
-    !Number.isInteger(fragment.lengthMax) ||
-    fragment.lengthMin < 20 ||
-    fragment.lengthMax > 1000 ||
-    fragment.lengthMin > fragment.lengthMax;
-  if (invalidLength) {
-    throw new AppError("INVALID_FRAGMENT_LENGTH", 400, "Invalid fragment length range.");
-  }
-
-  const invalidDelay =
-    !Number.isInteger(fragment.delayMin) ||
-    !Number.isInteger(fragment.delayMax) ||
-    fragment.delayMin < 0 ||
-    fragment.delayMax > 5000 ||
-    fragment.delayMin > fragment.delayMax;
-  if (invalidDelay) {
-    throw new AppError("INVALID_FRAGMENT_DELAY", 400, "Invalid fragment delay range.");
-  }
-
-  const invalidSplit =
-    !Number.isInteger(fragment.maxSplitMin) ||
-    !Number.isInteger(fragment.maxSplitMax) ||
-    fragment.maxSplitMin < 0 ||
-    fragment.maxSplitMax > 20 ||
-    fragment.maxSplitMin > fragment.maxSplitMax;
-  if (invalidSplit) {
-    throw new AppError("INVALID_FRAGMENT_SPLIT", 400, "Invalid fragment split range.");
-  }
-
   if (!network.ports.every((port) => Number.isInteger(port) && port >= 1 && port <= 65535)) {
     throw new AppError("INVALID_PORTS", 400, "Ports must be integers between 1 and 65535.");
   }
@@ -182,19 +133,6 @@ export function validateNetworkSettings(network: NetworkSettings): void {
 
   if (!network.dns.remote.startsWith("https://")) {
     throw new AppError("INVALID_DOH_URL", 400, "Remote DNS must be an https:// DoH endpoint.");
-  }
-
-  const serverName = network.ech.serverName.trim();
-  if (serverName && !/^(?=.{1,253}$)([a-z0-9](-*[a-z0-9])*\.)+[a-z]{2,}$/i.test(serverName)) {
-    throw new AppError("INVALID_ECH_SERVER_NAME", 400, "Invalid ECH server name.");
-  }
-
-  if (network.fragment.mode === "custom" && network.ech.enabled) {
-    throw new AppError(
-      "FRAGMENT_ECH_CONFLICT",
-      409,
-      "Fragment and ECH cannot be enabled together.",
-    );
   }
 }
 
@@ -217,8 +155,8 @@ export function validateGeneralSettings(general: GeneralSettings): void {
 
 /**
  * Section-level merge used by GET (stored over defaults) and PATCH
- * (patch over stored). Nested fragment/ech/customCdn/dns objects merge
- * field-by-field; arrays replace wholesale.
+ * (patch over stored). Nested customCdn/dns objects merge field-by-field;
+ * arrays replace wholesale.
  */
 export function mergeSettings(
   base: PanelSettings,
@@ -226,14 +164,18 @@ export function mergeSettings(
 ): PanelSettings {
   const general = { ...base.general, ...patch.general };
   const networkPatch: Partial<NetworkSettings> = patch.network ?? {};
+  // Drop keys that no longer belong here. Fragment/ECH moved onto the
+  // backend; a stale client still sending them must not resurrect dead
+  // fields in the merged output.
+  const knownPatch: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(networkPatch)) {
+    if (Object.prototype.hasOwnProperty.call(DEFAULT_SETTINGS.network, key)) {
+      knownPatch[key] = value;
+    }
+  }
   const network: NetworkSettings = {
     ...base.network,
-    ...networkPatch,
-    fragment: {
-      ...base.network.fragment,
-      ...networkPatch.fragment,
-    } as FragmentSettings,
-    ech: { ...base.network.ech, ...networkPatch.ech } as EchSettings,
+    ...(knownPatch as Partial<NetworkSettings>),
     customCdn: {
       ...base.network.customCdn,
       ...networkPatch.customCdn,
