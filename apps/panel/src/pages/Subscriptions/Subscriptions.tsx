@@ -43,24 +43,33 @@ const FORMATS: SubscriptionFormat[] = ["base64", "plain", "clash", "singbox"];
  * same as "left blank" and fall back to the current origin.
  */
 const PLACEHOLDER_ORIGIN = "https://panel.example.com";
+const PLACEHOLDER_BASE = `${PLACEHOLDER_ORIGIN}/sub`;
+const SUB_PATH = "/sub";
 
 /**
  * Resolve the base that subscription links are built on. An admin may serve
  * the panel behind a custom domain, so a stored base wins over the current
  * origin; when nothing usable is configured, links keep working by falling
  * back to whatever origin the panel is actually on.
+ *
+ * The field is a *subscription* base, so it conventionally already ends in
+ * /sub (the shipped placeholder does). A trailing /sub is stripped so the
+ * join below appends the path exactly once — otherwise the link reads
+ * /sub/sub/<token> and the subscription never resolves. An origin-only
+ * value (https://panel.example.com) works unchanged.
  */
 export function resolveSubscriptionBase(settings: PanelSettings | null): string {
-  const base = settings?.general.subscriptionBaseUrl?.trim();
-  if (!base || base === PLACEHOLDER_ORIGIN || base === `${PLACEHOLDER_ORIGIN}/sub`) {
+  const raw = settings?.general.subscriptionBaseUrl?.trim();
+  if (!raw || raw === PLACEHOLDER_ORIGIN || raw === PLACEHOLDER_BASE) {
     return window.location.origin;
   }
-  return base.replace(/\/+$/, "");
+  const base = raw.replace(/\/+$/, "");
+  return base.endsWith(SUB_PATH) ? base.slice(0, -SUB_PATH.length) : base;
 }
 
 /** Full public URL for a subscription token. */
 function subscriptionUrl(token: string, base: string): string {
-  return `${base.replace(/\/+$/, "")}/sub/${token}`;
+  return `${base.replace(/\/+$/, "")}${SUB_PATH}/${token}`;
 }
 
 function maskToken(token: string): string {

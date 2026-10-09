@@ -45,9 +45,11 @@ describe("resolveSubscriptionBase", () => {
     expect(resolveSubscriptionBase(withBaseUrl(`${CUSTOM}//`))).toBe(CUSTOM);
   });
 
-  it("keeps a sub-path base intact", () => {
-    // Some installs serve /sub from a nested path, not the origin root.
-    expect(resolveSubscriptionBase(withBaseUrl(`${CUSTOM}/sub`))).toBe(`${CUSTOM}/sub`);
+  it("strips a duplicated trailing /sub so the join does not double it", () => {
+    // The field is a subscription base, so it conventionally ends in /sub.
+    // Leaving it would produce /sub/sub/<token> and a dead link.
+    expect(resolveSubscriptionBase(withBaseUrl(`${CUSTOM}/sub`))).toBe(CUSTOM);
+    expect(resolveSubscriptionBase(withBaseUrl(`${CUSTOM}/sub/`))).toBe(CUSTOM);
   });
 
   it("falls back to the current origin for the shipped placeholder", () => {
