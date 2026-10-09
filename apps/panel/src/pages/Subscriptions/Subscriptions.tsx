@@ -30,6 +30,7 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import type {
   ConfigUser,
   Paginated,
+  PanelSettings,
   Subscription,
   SubscriptionFormat,
 } from "../../types/dto";
@@ -37,10 +38,29 @@ import "./Subscriptions.css";
 
 const FORMATS: SubscriptionFormat[] = ["base64", "plain", "clash", "singbox"];
 
+/**
+ * The shipped default is a placeholder, not a real address — treat it the
+ * same as "left blank" and fall back to the current origin.
+ */
+const PLACEHOLDER_ORIGIN = "https://panel.example.com";
+
+/**
+ * Resolve the base that subscription links are built on. An admin may serve
+ * the panel behind a custom domain, so a stored base wins over the current
+ * origin; when nothing usable is configured, links keep working by falling
+ * back to whatever origin the panel is actually on.
+ */
+export function resolveSubscriptionBase(settings: PanelSettings | null): string {
+  const base = settings?.general.subscriptionBaseUrl?.trim();
+  if (!base || base === PLACEHOLDER_ORIGIN || base === `${PLACEHOLDER_ORIGIN}/sub`) {
+    return window.location.origin;
+  }
+  return base.replace(/\/+$/, "");
+}
+
 /** Full public URL for a subscription token. */
-function subscriptionUrl(token: string): string {
-  const origin = window.location.origin;
-  return `${origin}/sub/${token}`;
+function subscriptionUrl(token: string, base: string): string {
+  return `${base.replace(/\/+$/, "")}/sub/${token}`;
 }
 
 function maskToken(token: string): string {
@@ -71,6 +91,11 @@ export default function Subscriptions() {
     () => getApi().listUsers({ perPage: 100 }),
     [],
   );
+
+  // Subscription links follow the configured base URL so the panel works
+  // behind a custom domain. An unset value means "use this origin".
+  const { data: settings } = useApi<PanelSettings>(() => getApi().getSettings(), []);
+  const subscriptionBase = resolveSubscriptionBase(settings);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Subscription | null>(null);
@@ -211,7 +236,7 @@ export default function Subscriptions() {
         return (
           <div className="sub-link-cell">
             <span className="sub-link mono" dir="ltr">
-              {isRevealed ? subscriptionUrl(sub.token) : maskToken(sub.token)}
+              {isRevealed ? subscriptionUrl(sub.token, subscriptionBase) : maskToken(sub.token)}
             </span>
             <button
               type="button"
@@ -223,7 +248,7 @@ export default function Subscriptions() {
             >
               {isRevealed ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
-            <CopyButton value={subscriptionUrl(sub.token)} />
+            <CopyButton value={subscriptionUrl(sub.token, subscriptionBase)} />
           </div>
         );
       },

@@ -367,6 +367,7 @@ export default function Settings() {
 
             <Input
               label={t("settings.general.subscriptionBaseUrl")}
+              hint={t("settings.general.subscriptionBaseUrlHint")}
               value={general.subscriptionBaseUrl}
               onChange={(event) =>
                 setGeneralField("subscriptionBaseUrl", event.target.value)
