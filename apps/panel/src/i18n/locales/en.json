@@ -384,6 +384,7 @@
       "panelName": "Panel name",
       "siteUrl": "Site URL",
       "subscriptionBaseUrl": "Subscription base URL",
+      "subscriptionBaseUrlHint": "Where subscription links point. Leave as-is to use the current panel address.",
       "defaultLanguage": "Default language",
       "defaultQuota": "Default quota (GB)",
       "defaultQuotaHint": "Applied to new users; 0 means unlimited",
