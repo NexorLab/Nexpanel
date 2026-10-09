@@ -5,6 +5,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { getApi } from "../../lib/api";
+import { errorCode } from "../../lib/api/errors";
 import "./Login.css";
 
 type LoginMode = "loading" | "login" | "setup";
@@ -71,8 +72,8 @@ export default function Login() {
           login(result.admin, result.token);
           navigate(from, { replace: true });
         })
-        .catch((err: Error) => {
-          if (err.message === "SETUP_ALREADY_DONE") {
+        .catch((err: unknown) => {
+          if (errorCode(err) === "SETUP_ALREADY_DONE") {
             setMode("login");
           } else {
             setError(t("login.setupFailed"));

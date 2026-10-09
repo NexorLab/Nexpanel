@@ -22,6 +22,7 @@ import Select from "../../components/ui/Select";
 import Switch from "../../components/ui/Switch";
 import { useApi } from "../../hooks/useApi";
 import { getApi } from "../../lib/api";
+import { errorCode } from "../../lib/api/errors";
 import { useToast } from "../../contexts/ToastContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { useLanguage } from "../../contexts/LanguageContext";
@@ -243,7 +244,7 @@ export default function Backends() {
       refetch();
     } catch (error) {
       setFormError(
-        error instanceof Error && error.message === "NAME_TAKEN"
+        errorCode(error) === "NAME_TAKEN"
           ? t("backends.form.nameTaken")
           : t("errors.unknown"),
       );
