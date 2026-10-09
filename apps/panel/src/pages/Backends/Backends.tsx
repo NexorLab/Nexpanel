@@ -41,7 +41,8 @@ const SS_METHODS = [
 
 const TRANSPORTS: Backend["transport"][] = ["tcp", "ws", "grpc", "httpupgrade", "xhttp"];
 const SECURITY_OPTIONS: Backend["security"][] = ["none", "tls", "reality"];
-const PACKET_OPTIONS: FragmentPackets[] = ["tlshello", "hello-ice", "1-3"];
+// Mirrors core's FragmentPackets; keep in lockstep with the union.
+const PACKET_OPTIONS: FragmentPackets[] = ["tlshello", "1-1", "1-2", "1-3", "1-5"];
 
 interface BackendFormState {
   name: string;

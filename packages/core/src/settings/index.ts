@@ -9,7 +9,8 @@ import { AppError } from "../index";
  */
 
 export type FragmentMode = "none" | "custom";
-export type FragmentPackets = "tlshello" | "hello-ice" | "1-3";
+/** Matches xray-core's own FragmentPacket, which BPB mirrors verbatim. */
+export type FragmentPackets = "tlshello" | "1-1" | "1-2" | "1-3" | "1-5";
 export type TlsFingerprint =
   | "chrome"
   | "firefox"

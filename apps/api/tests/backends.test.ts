@@ -223,6 +223,21 @@ describe("backends", () => {
     });
   });
 
+  it("accepts every fragment packets value and rejects a dropped one", async () => {
+    const { token } = await setupOwner(app, env);
+    for (const packets of ["tlshello", "1-1", "1-2", "1-3", "1-5"] as const) {
+      const backend = await createBackend(app, env, token, {
+        fragment: { mode: "custom", packets },
+      });
+      expect(backend.fragment.packets).toBe(packets);
+    }
+    const response = await authed("POST", "/api/v1/backends", token, {
+      ...VALID_BODY,
+      fragment: { mode: "custom", packets: "hello-ice" },
+    });
+    expect(response.status).toBe(400);
+  });
+
   it("rejects fragment on a plaintext backend", async () => {
     const { token } = await setupOwner(app, env);
     const response = await authed("POST", "/api/v1/backends", token, {

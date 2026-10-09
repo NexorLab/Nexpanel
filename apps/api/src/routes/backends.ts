@@ -97,7 +97,8 @@ function requirePort(value: unknown): number {
   return value;
 }
 
-const FRAGMENT_PACKETS = ["tlshello", "hello-ice", "1-3"] as const;
+// Mirrors core's FragmentPackets; keep in lockstep with the union.
+const FRAGMENT_PACKETS = ["tlshello", "1-1", "1-2", "1-3", "1-5"] as const;
 const FRAGMENT_MODES = ["none", "custom"] as const;
 
 /**
