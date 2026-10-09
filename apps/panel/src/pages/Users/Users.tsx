@@ -26,6 +26,7 @@ import EmptyState from "../../components/ui/EmptyState";
 import CopyButton from "../../components/ui/CopyButton";
 import { useApi, useDebouncedValue } from "../../hooks/useApi";
 import { getApi } from "../../lib/api";
+import { errorCode } from "../../lib/api/errors";
 import { useFormat, bytesToGb } from "../../lib/format";
 import { useToast } from "../../contexts/ToastContext";
 import { useAuth } from "../../contexts/AuthContext";
@@ -166,7 +167,7 @@ export default function Users() {
       refetch();
     } catch (error) {
       setFormError(
-        error instanceof Error && error.message === "USERNAME_TAKEN"
+        errorCode(error) === "USERNAME_TAKEN"
           ? t("users.form.usernameTaken")
           : t("errors.unknown"),
       );

@@ -23,6 +23,7 @@ import Tabs from "../../components/ui/Tabs";
 import NetworkTab from "./NetworkTab";
 import { useApi } from "../../hooks/useApi";
 import { getApi } from "../../lib/api";
+import { errorCode } from "../../lib/api/errors";
 import { DEFAULT_SETTINGS } from "../../lib/settings";
 import { useFormat } from "../../lib/format";
 import { useToast } from "../../contexts/ToastContext";
@@ -192,7 +193,7 @@ export default function Settings() {
       refetchAdmins();
     } catch (error) {
       setAdminFormError(
-        error instanceof Error && error.message === "USERNAME_TAKEN"
+        errorCode(error) === "USERNAME_TAKEN"
           ? t("settings.admins.form.usernameTaken")
           : t("errors.unknown"),
       );
