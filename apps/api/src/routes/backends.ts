@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import {
   NotFoundError,
   ValidationError,
+  validateBackend,
   isValidHost,
   type Backend,
   type EchSettings,
@@ -299,6 +300,8 @@ backendRoutes.post("/", async (c) => {
   const repos = createRepositories(c.env);
   const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
   const fields = parseCreateBody(body);
+  const validationError = validateBackend(fields);
+  if (validationError) throw new ValidationError(validationError);
 
   const existing = await repos.backends.list();
   const backend = await repos.backends.create({
@@ -319,7 +322,10 @@ backendRoutes.patch("/:id", async (c) => {
   // ECH/fragment validation depends on security, which this PATCH may change
   // in the same request — validate against the security the row will have.
   const effectiveSecurity = body.security === undefined ? stored.security : oneOf(body.security, SECURITIES, "security");
-  const backend = await repos.backends.update(id, parsePatchBody(body, effectiveSecurity));
+  const patch = parsePatchBody(body, effectiveSecurity);
+  const validationError = validateBackend({ ...stored, ...patch });
+  if (validationError) throw new ValidationError(validationError);
+  const backend = await repos.backends.update(id, patch);
 
   // configs.uri is denormalized — refresh every derived config so a
   // host/port/transport/status change reaches subscriptions immediately,

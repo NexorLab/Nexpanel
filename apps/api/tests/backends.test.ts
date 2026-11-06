@@ -279,6 +279,41 @@ describe("backends", () => {
     expect(backend.ech).toEqual({ enabled: true, serverName: "ech.example.com" });
   });
 
+  it("rejects changing security to none when custom Fragment is enabled", async () => {
+    const { token } = await setupOwner(app, env);
+    const backend = await createBackend(app, env, token, {
+      fragment: { mode: "custom" },
+    });
+
+    const response = await authed("PATCH", `/api/v1/backends/${backend.id}`, token, {
+      security: "none",
+    });
+    expect(response.status).toBe(400);
+
+    const listed = (await (await authed("GET", "/api/v1/backends", token)).json()) as Array<{
+      id: string;
+      security: string;
+    }>;
+    expect(listed.find((item) => item.id === backend.id)?.security).toBe("tls");
+  });
+
+  it("rejects changing security to Reality when ECH is enabled", async () => {
+    const { token } = await setupOwner(app, env);
+    const backend = await createBackend(app, env, token, {
+      ech: { enabled: true, serverName: "ech.example.com" },
+    });
+
+    const response = await authed("PATCH", `/api/v1/backends/${backend.id}`, token, {
+      security: "reality",
+    });
+    expect(response.status).toBe(400);
+
+    const listed = (await (await authed("GET", "/api/v1/backends", token)).json()) as Array<{
+      id: string;
+      security: string;
+    }>;
+    expect(listed.find((item) => item.id === backend.id)?.security).toBe("tls");
+  });
   it("rejects ECH on PATCH against a stored plaintext backend", async () => {
     // Flipping ECH alone must still see the row's security.
     const { token } = await setupOwner(app, env);
