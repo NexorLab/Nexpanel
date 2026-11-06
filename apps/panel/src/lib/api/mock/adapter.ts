@@ -12,6 +12,7 @@ import type {
   Subscription,
 } from "../../../types/dto";
 import { DEFAULT_SETTINGS } from "../../settings";
+import { validateBackend } from "@nexpanel/core";
 import {
   buildSeedConfigs,
   buildSeedStats,
@@ -216,18 +217,20 @@ export function createMockAdapter(): ApiClient {
   function assertValidBackendNetwork(
     backend: Pick<Backend, "fragment" | "ech" | "security">,
   ): void {
-    const { fragment, ech, security } = backend;
-    if (fragment.mode === "custom" && security === "none") {
+    const error = validateBackend(backend);
+    if (!error) return;
+
+    if (error === "Fragment requires TLS or Reality security.") {
       throw new ConflictError("BACKEND_FRAGMENT_REQUIRES_TLS");
     }
-    if (ech.enabled) {
-      if (security !== "tls") {
-        throw new ConflictError("BACKEND_ECH_REQUIRES_TLS");
-      }
-      if (!ech.serverName.trim()) {
-        throw new ConflictError("BACKEND_ECH_SERVER_NAME_REQUIRED");
-      }
+    if (error === "ECH requires TLS security.") {
+      throw new ConflictError("BACKEND_ECH_REQUIRES_TLS");
     }
+    if (error === "ECH requires a server name.") {
+      throw new ConflictError("BACKEND_ECH_SERVER_NAME_REQUIRED");
+    }
+
+    throw new ConflictError(error);
   }
 
   function buildUri(user: ConfigUser, backend: Backend): string {
