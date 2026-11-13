@@ -503,6 +503,9 @@
     "network": "خطای شبکه. لطفاً دوباره تلاش کنید.",
     "unknown": "مشکلی پیش آمد. لطفاً دوباره تلاش کنید.",
     "unauthorized": "نشست شما منقضی شده است. لطفاً دوباره وارد شوید.",
-    "forbidden": "شما اجازه انجام این کار را ندارید."
+    "forbidden": "شما اجازه انجام این کار را ندارید.",
+    "BACKEND_FRAGMENT_REQUIRES_TLS": "Fragment سفارشی به امنیت TLS یا Reality نیاز دارد.",
+    "BACKEND_ECH_REQUIRES_TLS": "قابلیت ECH فقط با امنیت TLS قابل استفاده است.",
+    "BACKEND_ECH_SERVER_NAME_REQUIRED": "هنگام فعال بودن ECH، وارد کردن نام سرور الزامی است."
   }
 }

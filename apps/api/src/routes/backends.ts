@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import {
+  AppError,
   NotFoundError,
   ValidationError,
   validateBackend,
@@ -140,7 +141,7 @@ function parseFragment(value: unknown, security: Backend["security"]): FragmentS
 
   // Fragmentation rewrites the TLS Client Hello, so it needs a TLS session.
   if (mode === "custom" && security === "none") {
-    throw new ValidationError("fragment requires security tls or reality.");
+    throw new AppError("BACKEND_FRAGMENT_REQUIRES_TLS", 400, "Fragment requires TLS or Reality security.");
   }
   return settings;
 }
@@ -171,10 +172,10 @@ function parseEch(value: unknown, security: Backend["security"]): EchSettings {
     return { enabled: false, serverName };
   }
   if (security !== "tls") {
-    throw new ValidationError("ech requires security tls.");
+    throw new AppError("BACKEND_ECH_REQUIRES_TLS", 400, "ECH requires TLS security.");
   }
   if (serverName.trim().length === 0) {
-    throw new ValidationError("ech.serverName is required when ECH is enabled.");
+    throw new AppError("BACKEND_ECH_SERVER_NAME_REQUIRED", 400, "ECH requires a server name.");
   }
   if (!isValidHost(serverName)) {
     throw new ValidationError("ech.serverName must be a hostname.");
@@ -301,7 +302,7 @@ backendRoutes.post("/", async (c) => {
   const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
   const fields = parseCreateBody(body);
   const validationError = validateBackend(fields);
-  if (validationError) throw new ValidationError(validationError);
+  if (validationError) throw new AppError(validationError.code, 400, validationError.message);
 
   const existing = await repos.backends.list();
   const backend = await repos.backends.create({
@@ -324,7 +325,7 @@ backendRoutes.patch("/:id", async (c) => {
   const effectiveSecurity = body.security === undefined ? stored.security : oneOf(body.security, SECURITIES, "security");
   const patch = parsePatchBody(body, effectiveSecurity);
   const validationError = validateBackend({ ...stored, ...patch });
-  if (validationError) throw new ValidationError(validationError);
+  if (validationError) throw new AppError(validationError.code, 400, validationError.message);
   const backend = await repos.backends.update(id, patch);
 
   // configs.uri is denormalized — refresh every derived config so a

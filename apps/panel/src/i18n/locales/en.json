@@ -503,6 +503,9 @@
     "network": "Network error. Please try again.",
     "unknown": "Something went wrong. Please try again.",
     "unauthorized": "Your session has expired. Please sign in again.",
-    "forbidden": "You do not have permission to do that."
+    "forbidden": "You do not have permission to do that.",
+    "BACKEND_FRAGMENT_REQUIRES_TLS": "Custom Fragment requires TLS or Reality security.",
+    "BACKEND_ECH_REQUIRES_TLS": "ECH can only be used with TLS security.",
+    "BACKEND_ECH_SERVER_NAME_REQUIRED": "A server name is required when ECH is enabled."
   }
 }

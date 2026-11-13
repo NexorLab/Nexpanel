@@ -1,26 +1,44 @@
 import type { Backend } from "./types";
 
+export type BackendValidationErrorCode =
+  | "BACKEND_FRAGMENT_REQUIRES_TLS"
+  | "BACKEND_ECH_REQUIRES_TLS"
+  | "BACKEND_ECH_SERVER_NAME_REQUIRED";
+
+export interface BackendValidationError {
+  code: BackendValidationErrorCode;
+  message: string;
+}
+
 /**
- * Returns a domain validation message for incompatible Backend network
- * settings, or null when the settings are valid.
+ * Validates cross-field Backend network settings.
  *
- * This validates cross-field rules only. Raw field types, formats and
- * numeric ranges are validated by the API input parser.
+ * Raw field types, formats and numeric ranges are validated by the
+ * API input parser.
  */
 export function validateBackend(
   backend: Pick<Backend, "security" | "fragment" | "ech">,
-): string | null {
+): BackendValidationError | null {
   if (backend.fragment.mode === "custom" && backend.security === "none") {
-    return "Fragment requires TLS or Reality security.";
+    return {
+      code: "BACKEND_FRAGMENT_REQUIRES_TLS",
+      message: "Fragment requires TLS or Reality security.",
+    };
   }
 
   if (backend.ech.enabled) {
     if (backend.security !== "tls") {
-      return "ECH requires TLS security.";
+      return {
+        code: "BACKEND_ECH_REQUIRES_TLS",
+        message: "ECH requires TLS security.",
+      };
     }
 
     if (backend.ech.serverName.trim().length === 0) {
-      return "ECH requires a server name.";
+      return {
+        code: "BACKEND_ECH_SERVER_NAME_REQUIRED",
+        message: "ECH requires a server name.",
+      };
     }
   }
 

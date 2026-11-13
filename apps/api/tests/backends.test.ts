@@ -246,6 +246,7 @@ describe("backends", () => {
       fragment: { mode: "custom" },
     });
     expect(response.status).toBe(400);
+    expect(((await response.json()) as { error: { code: string } }).error.code).toBe("BACKEND_FRAGMENT_REQUIRES_TLS");
   });
 
   it("rejects ECH without a serverName", async () => {
@@ -255,6 +256,7 @@ describe("backends", () => {
       ech: { enabled: true, serverName: "" },
     });
     expect(response.status).toBe(400);
+    expect(((await response.json()) as { error: { code: string } }).error.code).toBe("BACKEND_ECH_SERVER_NAME_REQUIRED");
   });
 
   it("rejects ECH on a non-TLS backend", async () => {
@@ -265,6 +267,7 @@ describe("backends", () => {
       ech: { enabled: true, serverName: "ech.example.com" },
     });
     expect(response.status).toBe(400);
+    expect(((await response.json()) as { error: { code: string } }).error.code).toBe("BACKEND_ECH_REQUIRES_TLS");
   });
 
   it("allows fragment + ECH together (fragment wins at render)", async () => {
@@ -289,6 +292,7 @@ describe("backends", () => {
       security: "none",
     });
     expect(response.status).toBe(400);
+    expect(((await response.json()) as { error: { code: string } }).error.code).toBe("BACKEND_FRAGMENT_REQUIRES_TLS");
 
     const listed = (await (await authed("GET", "/api/v1/backends", token)).json()) as Array<{
       id: string;
@@ -307,6 +311,7 @@ describe("backends", () => {
       security: "reality",
     });
     expect(response.status).toBe(400);
+    expect(((await response.json()) as { error: { code: string } }).error.code).toBe("BACKEND_ECH_REQUIRES_TLS");
 
     const listed = (await (await authed("GET", "/api/v1/backends", token)).json()) as Array<{
       id: string;
@@ -322,6 +327,7 @@ describe("backends", () => {
       ech: { enabled: true, serverName: "ech.example.com" },
     });
     expect(response.status).toBe(400);
+    expect(((await response.json()) as { error: { code: string } }).error.code).toBe("BACKEND_ECH_REQUIRES_TLS");
   });
 
   it("validates fragment ranges on the backend", async () => {
