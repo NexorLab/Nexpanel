@@ -14,6 +14,9 @@ import type { Context } from "hono";
 /** Error codes that the panel frontend can match on. */
 export type ErrorCode =
   | "VALIDATION_ERROR"
+  | "BACKEND_FRAGMENT_REQUIRES_TLS"
+  | "BACKEND_ECH_REQUIRES_TLS"
+  | "BACKEND_ECH_SERVER_NAME_REQUIRED"
   | "UNAUTHORIZED"
   | "FORBIDDEN"
   | "NOT_FOUND"

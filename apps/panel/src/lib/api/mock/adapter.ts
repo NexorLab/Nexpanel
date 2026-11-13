@@ -220,17 +220,7 @@ export function createMockAdapter(): ApiClient {
     const error = validateBackend(backend);
     if (!error) return;
 
-    if (error === "Fragment requires TLS or Reality security.") {
-      throw new ConflictError("BACKEND_FRAGMENT_REQUIRES_TLS");
-    }
-    if (error === "ECH requires TLS security.") {
-      throw new ConflictError("BACKEND_ECH_REQUIRES_TLS");
-    }
-    if (error === "ECH requires a server name.") {
-      throw new ConflictError("BACKEND_ECH_SERVER_NAME_REQUIRED");
-    }
-
-    throw new ConflictError(error);
+    throw new ConflictError(error.code);
   }
 
   function buildUri(user: ConfigUser, backend: Backend): string {

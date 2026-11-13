@@ -86,7 +86,10 @@ describe("validateBackend", () => {
           },
         }),
       ),
-    ).toBe("Fragment requires TLS or Reality security.");
+    ).toEqual({
+      code: "BACKEND_FRAGMENT_REQUIRES_TLS",
+      message: "Fragment requires TLS or Reality security.",
+    });
   });
 
   it("accepts enabled ECH with TLS and a server name", () => {
@@ -107,7 +110,10 @@ describe("validateBackend", () => {
           ech: { enabled: true, serverName: "example.com" },
         }),
       ),
-    ).toBe("ECH requires TLS security.");
+    ).toEqual({
+      code: "BACKEND_ECH_REQUIRES_TLS",
+      message: "ECH requires TLS security.",
+    });
   });
 
   it("rejects enabled ECH with an empty server name", () => {
@@ -117,7 +123,10 @@ describe("validateBackend", () => {
           ech: { enabled: true, serverName: "  " },
         }),
       ),
-    ).toBe("ECH requires a server name.");
+    ).toEqual({
+      code: "BACKEND_ECH_SERVER_NAME_REQUIRED",
+      message: "ECH requires a server name.",
+    });
   });
 
   it("allows Fragment and ECH together with TLS", () => {

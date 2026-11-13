@@ -243,10 +243,17 @@ export default function Backends() {
       setFormOpen(false);
       refetch();
     } catch (error) {
+      const code = errorCode(error);
       setFormError(
-        errorCode(error) === "NAME_TAKEN"
+        code === "NAME_TAKEN"
           ? t("backends.form.nameTaken")
-          : t("errors.unknown"),
+          : code === "BACKEND_FRAGMENT_REQUIRES_TLS"
+            ? t("errors.BACKEND_FRAGMENT_REQUIRES_TLS")
+            : code === "BACKEND_ECH_REQUIRES_TLS"
+              ? t("errors.BACKEND_ECH_REQUIRES_TLS")
+              : code === "BACKEND_ECH_SERVER_NAME_REQUIRED"
+                ? t("errors.BACKEND_ECH_SERVER_NAME_REQUIRED")
+                : t("errors.unknown"),
       );
     } finally {
       setSaving(false);

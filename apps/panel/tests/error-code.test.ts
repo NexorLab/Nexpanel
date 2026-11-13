@@ -19,6 +19,14 @@ describe("errorCode", () => {
     );
   });
 
+  it.each([
+    "BACKEND_FRAGMENT_REQUIRES_TLS",
+    "BACKEND_ECH_REQUIRES_TLS",
+    "BACKEND_ECH_SERVER_NAME_REQUIRED",
+  ])("reads the mock backend validation code %s", (code) => {
+    expect(errorCode(new Error(code))).toBe(code);
+  });
+
   it("falls back to message for mock errors, whose message IS the code", () => {
     class ConflictError extends Error {
       constructor(message: string) {
