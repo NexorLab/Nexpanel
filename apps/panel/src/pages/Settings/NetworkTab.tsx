@@ -136,7 +136,7 @@ export default function NetworkTab({ canEdit }: NetworkTabProps) {
       setCdnAddrsText(result.network.customCdn.addrs.join("\n"));
       setPortsText(result.network.ports.join(", "));
       toast.push({ type: "success", title: t("settings.network.saved") });
-    } catch (error) {
+    } catch {
       const message = t("settings.network.errors.validation");
       setFormError(message);
       toast.push({ type: "error", title: message });

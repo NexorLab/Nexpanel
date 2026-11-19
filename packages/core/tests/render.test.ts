@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { parse } from "yaml";
 
 import { renderSubscriptionBody, type SubConfigSource } from "../src/sub/render";
 import { DEFAULT_SETTINGS } from "../src/settings";
@@ -288,7 +289,42 @@ describe("clash ECH", () => {
     expect(yaml).not.toContain("ech-opts");
   });
 });
+describe("clash YAML indentation", () => {
+  it("indents nested maps inside proxy array items correctly", () => {
+    const yaml = renderClash([
+      source({
+        backend: {
+          hostHeader: "cdn.example.com",
+          ech: {
+            enabled: true,
+            serverName: "ech.example.com",
+          },
+        },
+      }),
+    ]);
+    const parsed = parse(yaml) as {
+  proxies: Array<Record<string, unknown>>;
+};
+    const proxy = parsed.proxies[0];
+    expect(proxy["ech-opts"]).toMatchObject({
+  enable: true,
+  "query-server-name": "ech.example.com",
+});
 
+expect(proxy["ws-opts"]).toMatchObject({
+  headers: {
+    Host: "cdn.example.com",
+  },
+});
+    expect(yaml).toContain('      ech-opts:');
+    expect(yaml).toContain('        enable: true');
+    expect(yaml).toContain('        query-server-name: "ech.example.com"');
+
+    expect(yaml).toContain('      ws-opts:');
+    expect(yaml).toContain('        headers:');
+    expect(yaml).toContain('          Host: "cdn.example.com"');
+  });
+});
 describe("plain and base64 bodies", () => {
   it("plain joins config URIs", () => {
     const body = renderSubscriptionBody([source({})], "plain");

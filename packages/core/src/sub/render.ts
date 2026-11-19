@@ -188,7 +188,7 @@ function emitYamlNode(key: string, value: unknown, indent: number, marker = ""):
   if (entries.length === 0) return [`${head} {}`];
   const lines: string[] = [head];
   for (const [entryKey, entryValue] of entries) {
-    lines.push(...emitYamlNode(entryKey, entryValue, indent + 2));
+    lines.push(...emitYamlNode(entryKey, entryValue, indent + marker.length + 2));
   }
   return lines;
 }
