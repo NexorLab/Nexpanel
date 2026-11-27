@@ -9,8 +9,11 @@ export interface Env {
   /** D1 database binding (wrangler.jsonc → d1_databases). */
   DB: D1Database;
 
-  /** HMAC secret for JWT signing (Worker secret, never in wrangler.jsonc). */
+    /** HMAC secret for JWT signing (Worker secret, never in wrangler.jsonc). */
   JWT_SECRET: string;
+
+  /** AES-256-GCM key for encrypting backend credentials at rest. */
+  BACKEND_ENCRYPTION_KEY: string;
 
   /**
    * Public origin that serves subscription links, e.g.

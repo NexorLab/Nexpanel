@@ -8,7 +8,11 @@ import { bearer } from "./helpers";
  */
 
 type App = ReturnType<typeof createApp>;
-type Env = { DB: unknown; JWT_SECRET: string };
+type Env = {
+  DB: unknown;
+  JWT_SECRET: string;
+  BACKEND_ENCRYPTION_KEY: string;
+};
 
 export interface TestUser {
   id: string;

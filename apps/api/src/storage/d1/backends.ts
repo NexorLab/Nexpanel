@@ -6,6 +6,10 @@ import {
   type EchSettings,
   type FragmentSettings,
 } from "@nexpanel/core";
+import {
+  decryptBackendSecret,
+  encryptBackendSecret,
+} from "../../services/backend-crypto";
 
 /**
  * D1-backed BackendRepository. name is UNIQUE (case-sensitive, unlike
@@ -78,7 +82,8 @@ function parseEch(value: string): EchSettings {
   }
 }
 
-function mapRow(row: BackendRow): Backend {
+
+async function mapRow(row: BackendRow, encryptionKey: string): Promise<Backend> {
   return {
     id: row.id,
     name: row.name,
@@ -91,8 +96,8 @@ function mapRow(row: BackendRow): Backend {
     hostHeader: row.host_header,
     path: row.path,
     serviceName: row.service_name,
-    uuid: row.uuid,
-    password: row.password,
+    uuid: await decryptBackendSecret(row.uuid, encryptionKey) ?? null,
+    password: await decryptBackendSecret(row.password, encryptionKey) ?? null,
     method: row.method,
     realityPublicKey: row.reality_public_key,
     realityShortId: row.reality_short_id,
@@ -137,7 +142,7 @@ function insertParams(backend: Omit<Backend, "createdAt" | "updatedAt">, now: nu
   ];
 }
 
-export function createBackendRepository(db: D1Database): BackendRepository {
+export function createBackendRepository(db: D1Database, encryptionKey: string): BackendRepository {
   return {
     async list(params) {
       const where = params?.status ? "WHERE status = ?1" : "";
@@ -146,7 +151,7 @@ export function createBackendRepository(db: D1Database): BackendRepository {
       const { results } = params?.status
         ? await statement.bind(params.status).all<BackendRow>()
         : await statement.all<BackendRow>();
-      return results.map(mapRow);
+      return Promise.all(results.map((row) => mapRow(row, encryptionKey)));
     },
 
     async getById(id) {
@@ -154,7 +159,7 @@ export function createBackendRepository(db: D1Database): BackendRepository {
         .prepare(`SELECT ${COLUMNS} FROM backends WHERE id = ?1`)
         .bind(id)
         .first<BackendRow>();
-      return row ? mapRow(row) : null;
+      return row ? await mapRow(row, encryptionKey) : null;
     },
 
     async getByName(name) {
@@ -162,7 +167,7 @@ export function createBackendRepository(db: D1Database): BackendRepository {
         .prepare(`SELECT ${COLUMNS} FROM backends WHERE name = ?1`)
         .bind(name)
         .first<BackendRow>();
-      return row ? mapRow(row) : null;
+      return row ? await mapRow(row, encryptionKey) : null;
     },
 
     async create(backend) {
@@ -174,12 +179,17 @@ export function createBackendRepository(db: D1Database): BackendRepository {
         throw new ConflictError("NAME_TAKEN", "Backend name is already taken.");
       }
       const now = Math.floor(Date.now() / 1000);
+const encryptedBackend = {
+  ...backend,
+  uuid: (await encryptBackendSecret(backend.uuid, encryptionKey)) ?? null,
+  password: (await encryptBackendSecret(backend.password, encryptionKey)) ?? null,
+};
       const result = await db
         .prepare(
           `INSERT INTO backends (${COLUMNS}) VALUES
              (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24)`,
         )
-        .bind(...insertParams(backend, now))
+        .bind(...insertParams(encryptedBackend, now))
         .run();
       if (!result.meta.changes) {
         throw new ConflictError("NAME_TAKEN", "Backend name is already taken.");
@@ -189,7 +199,7 @@ export function createBackendRepository(db: D1Database): BackendRepository {
         .bind(backend.id)
         .first<BackendRow>();
       if (!created) throw new NotFoundError("Backend");
-      return mapRow(created);
+      return await mapRow(created, encryptionKey);
     },
 
     async update(id, patch) {
@@ -209,7 +219,7 @@ export function createBackendRepository(db: D1Database): BackendRepository {
         }
       }
 
-      const merged = mapRow(current);
+      const merged = await mapRow(current, encryptionKey);
       if (patch.name !== undefined) merged.name = patch.name;
       if (patch.protocol !== undefined) merged.protocol = patch.protocol;
       if (patch.host !== undefined) merged.host = patch.host;
@@ -232,6 +242,8 @@ export function createBackendRepository(db: D1Database): BackendRepository {
       if (patch.status !== undefined) merged.status = patch.status;
       if (patch.sortOrder !== undefined) merged.sortOrder = patch.sortOrder;
 
+      const encryptedUuid = (await encryptBackendSecret(merged.uuid, encryptionKey)) ?? null;
+      const encryptedPassword = (await encryptBackendSecret(merged.password, encryptionKey)) ?? null;
       const row = await db
         .prepare(
           `UPDATE backends SET
@@ -255,8 +267,8 @@ export function createBackendRepository(db: D1Database): BackendRepository {
           merged.hostHeader,
           merged.path,
           merged.serviceName,
-          merged.uuid,
-          merged.password,
+          encryptedUuid,
+                encryptedPassword,
           merged.method,
           merged.realityPublicKey,
           merged.realityShortId,
@@ -270,7 +282,7 @@ export function createBackendRepository(db: D1Database): BackendRepository {
         )
         .first<BackendRow>();
       if (!row) throw new NotFoundError("Backend");
-      return mapRow(row);
+      return await mapRow(row, encryptionKey);
     },
 
     async delete(id) {

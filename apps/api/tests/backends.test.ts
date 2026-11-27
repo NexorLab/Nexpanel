@@ -1,16 +1,21 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp } from "../src/app";
+import { createBackendRepository } from "../src/storage/d1/backends";
 import type { Env } from "../src/env";
 import { createSqliteD1 } from "./sqlite-d1";
-import { bearer, setupOwner } from "./helpers";
+import { bearer, setupOwner, TEST_BACKEND_ENCRYPTION_KEY } from "./helpers";
 import { createBackend, createUser, generateConfig } from "./fixtures";
 
 let app: ReturnType<typeof createApp>;
-let env: { DB: Env["DB"]; JWT_SECRET: string };
+let env: { DB: Env["DB"]; JWT_SECRET: string; BACKEND_ENCRYPTION_KEY: string };
 
 beforeEach(() => {
   app = createApp();
-  env = { DB: createSqliteD1() as unknown as Env["DB"], JWT_SECRET: "test-secret-for-jwt-signing" };
+  env = {
+     DB: createSqliteD1() as unknown as Env["DB"],
+     JWT_SECRET: "test-secret-for-jwt-signing",
+     BACKEND_ENCRYPTION_KEY: TEST_BACKEND_ENCRYPTION_KEY,
+   };
 });
 
 function authed(method: string, path: string, token: string, body?: unknown) {
@@ -42,15 +47,71 @@ describe("backends", () => {
     expect(response.status).toBe(401);
   });
 
-  it("creates a backend with defaults", async () => {
-    const { token } = await setupOwner(app, env);
-    const created = await authed("POST", "/api/v1/backends", token, VALID_BODY);
-    expect(created.status).toBe(201);
-    const backend = (await created.json()) as { status: string; allowInsecure: boolean; sortOrder: number };
-    expect(backend.status).toBe("active");
-    expect(backend.allowInsecure).toBe(false);
-    expect(backend.sortOrder).toBe(1);
-  });
+    it("encrypts backend credentials at rest", async () => {
+       const { token } = await setupOwner(app, env);
+
+       const uuid = "123e4567-e89b-42d3-a456-426614174000";
+       const password = "backend-secret-password";
+
+       const backend = await createBackend(app, env, token, {
+         uuid,
+         password,
+       });
+
+       expect(backend.uuid).toBeNull();
+       expect(backend.password).toBeNull();
+       const repository = createBackendRepository(env.DB, env.BACKEND_ENCRYPTION_KEY);
+
+           const patchResponse = await authed(
+             "PATCH",
+             `/api/v1/backends/${backend.id}`,
+             token,
+             { host: "updated.example.com" },
+           );
+
+           expect(patchResponse.status).toBe(200);
+
+           const patched = (await patchResponse.json()) as {
+             uuid: string | null;
+             password: string | null;
+           };
+
+           expect(patched.uuid).toBeNull();
+           expect(patched.password).toBeNull();
+
+           const preserved = await repository.getById(backend.id);
+           expect(preserved?.uuid).toBe(uuid);
+           expect(preserved?.password).toBe(password);
+
+       const stored = await env.DB.prepare(
+         "SELECT uuid, password FROM backends WHERE id = ?",
+       )
+         .bind(backend.id)
+         .first<{ uuid: string | null; password: string | null }>();
+
+       expect(stored).not.toBeNull();
+       expect(stored?.uuid).toMatch(/^enc:v1:/);
+       expect(stored?.password).toMatch(/^enc:v1:/);
+       expect(stored?.uuid).not.toContain(uuid);
+       expect(stored?.password).not.toContain(password);
+       const decrypted = await repository.getById(backend.id);
+
+       expect(decrypted?.uuid).toBe(uuid);
+       expect(decrypted?.password).toBe(password);
+
+       const listResponse = await authed("GET", "/api/v1/backends", token);
+       expect(listResponse.status).toBe(200);
+
+       const listed = (await listResponse.json()) as {
+         id: string;
+         uuid: string | null;
+         password: string | null;
+       }[];
+
+       const listedBackend = listed.find((item) => item.id === backend.id);
+       expect(listedBackend?.uuid).toBeNull();
+       expect(listedBackend?.password).toBeNull();
+      });
 
   it("rejects duplicate names", async () => {
     const { token } = await setupOwner(app, env);
@@ -343,5 +404,107 @@ describe("backends", () => {
       fragment: { lengthMin: 5, lengthMax: 100 },
     });
     expect(outOfRange.status).toBe(400);
+  });
+  it("viewer can list backends but cannot create, update, delete, or test them", async () => {
+    const { token: ownerToken } = await setupOwner(app, env);
+
+    const backend = await createBackend(app, env, ownerToken);
+
+    const createdViewer = await authed("POST", "/api/v1/admins", ownerToken, {
+      username: "backend-viewer",
+      password: "password123",
+      role: "viewer",
+    });
+    expect(createdViewer.status).toBe(201);
+
+    const login = await app.request(
+      "/api/v1/auth/login",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          username: "backend-viewer",
+          password: "password123",
+        }),
+      },
+      env,
+    );
+    expect(login.status).toBe(200);
+
+    const { token: viewerToken } = (await login.json()) as { token: string };
+
+    const list = await authed("GET", "/api/v1/backends", viewerToken);
+    expect(list.status).toBe(200);
+
+    const create = await authed("POST", "/api/v1/backends", viewerToken, {
+      ...VALID_BODY,
+      name: "viewer-created",
+    });
+    expect(create.status).toBe(403);
+
+    const update = await authed("PATCH", `/api/v1/backends/${backend.id}`, viewerToken, {
+      host: "changed.example.com",
+    });
+    expect(update.status).toBe(403);
+
+    const remove = await authed("DELETE", `/api/v1/backends/${backend.id}`, viewerToken);
+    expect(remove.status).toBe(403);
+
+    const test = await authed("POST", `/api/v1/backends/${backend.id}/test`, viewerToken);
+    expect(test.status).toBe(403);
+  });
+  it("admin can create, update, test, and delete backends", async () => {
+    const { token: ownerToken } = await setupOwner(app, env);
+
+    const createdAdmin = await authed("POST", "/api/v1/admins", ownerToken, {
+      username: "backend-admin",
+      password: "password123",
+      role: "admin",
+    });
+    expect(createdAdmin.status).toBe(201);
+
+    const login = await app.request(
+      "/api/v1/auth/login",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          username: "backend-admin",
+          password: "password123",
+        }),
+      },
+      env,
+    );
+    expect(login.status).toBe(200);
+
+    const { token: adminToken } = (await login.json()) as { token: string };
+
+    const create = await authed("POST", "/api/v1/backends", adminToken, {
+      ...VALID_BODY,
+      name: "admin-created",
+    });
+    expect(create.status).toBe(201);
+
+    const backend = (await create.json()) as { id: string };
+
+    const update = await authed("PATCH", `/api/v1/backends/${backend.id}`, adminToken, {
+      host: "updated.example.com",
+    });
+    expect(update.status).toBe(200);
+
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(null, { status: 200 }),
+    );
+
+    try {
+      const test = await authed("POST", `/api/v1/backends/${backend.id}/test`, adminToken);
+      expect(test.status).toBe(200);
+      expect(fetchSpy).toHaveBeenCalledOnce();
+    } finally {
+      fetchSpy.mockRestore();
+    }
+
+    const remove = await authed("DELETE", `/api/v1/backends/${backend.id}`, adminToken);
+    expect(remove.status).toBe(204);
   });
 });

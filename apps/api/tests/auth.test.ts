@@ -2,14 +2,18 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../src/app";
 import type { Env } from "../src/env";
 import { createSqliteD1 } from "./sqlite-d1";
-import { bearer, loginAs, setupOwner } from "./helpers";
+import { bearer, loginAs, setupOwner, TEST_BACKEND_ENCRYPTION_KEY } from "./helpers";
 
 let app: ReturnType<typeof createApp>;
-let env: { DB: Env["DB"]; JWT_SECRET: string };
+let env: { DB: Env["DB"]; JWT_SECRET: string; BACKEND_ENCRYPTION_KEY: string };
 
 beforeEach(() => {
   app = createApp();
-  env = { DB: createSqliteD1() as unknown as Env["DB"], JWT_SECRET: "test-secret-for-jwt-signing" };
+  env = {
+     DB: createSqliteD1() as unknown as Env["DB"],
+     JWT_SECRET: "test-secret-for-jwt-signing",
+     BACKEND_ENCRYPTION_KEY: TEST_BACKEND_ENCRYPTION_KEY,
+   };
 });
 
 function post(path: string, body: unknown, headers: Record<string, string> = {}) {
@@ -135,7 +139,11 @@ describe("auth middleware", () => {
   });
 
   it("401 with a token signed for a different secret", async () => {
-    const other = { DB: createSqliteD1() as unknown as Env["DB"], JWT_SECRET: "another-secret" };
+    const other = {
+      DB: createSqliteD1() as unknown as Env["DB"],
+      JWT_SECRET: "another-secret",
+      BACKEND_ENCRYPTION_KEY: TEST_BACKEND_ENCRYPTION_KEY,
+    };
     const { token } = await setupOwner(app, other);
     const response = await app.request("/api/v1/admins", { headers: bearer(token) }, env);
     expect(response.status).toBe(401);

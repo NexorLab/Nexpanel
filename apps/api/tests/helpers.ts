@@ -3,14 +3,16 @@ import { createApp } from "../src/app";
 import type { Env } from "../src/env";
 
 export const TEST_SECRET = "test-secret-for-jwt-signing";
+export const TEST_BACKEND_ENCRYPTION_KEY = "0123456789abcdef".repeat(4);
 
 /** Fresh app + fake D1 per test; use with app.request(url, init, env). */
 export function makeTestEnv() {
   const app = createApp();
   const env = {
-    DB: createSqliteD1() as unknown as Env["DB"],
-    JWT_SECRET: TEST_SECRET,
-  };
+     DB: createSqliteD1() as unknown as Env["DB"],
+     JWT_SECRET: TEST_SECRET,
+     BACKEND_ENCRYPTION_KEY: TEST_BACKEND_ENCRYPTION_KEY,
+};
   return { app, env };
 }
 
@@ -20,7 +22,11 @@ export function bearer(token: string): Record<string, string> {
 
 export async function setupOwner(
   app: ReturnType<typeof createApp>,
-  env: { DB: unknown; JWT_SECRET: string },
+  env: {
+    DB: unknown;
+    JWT_SECRET: string;
+    BACKEND_ENCRYPTION_KEY: string;
+  },
   username = "owner",
   password = "password123",
 ) {
@@ -42,7 +48,11 @@ export async function setupOwner(
 
 export async function loginAs(
   app: ReturnType<typeof createApp>,
-  env: { DB: unknown; JWT_SECRET: string },
+  env: {
+     DB: unknown;
+     JWT_SECRET: string;
+     BACKEND_ENCRYPTION_KEY: string;
+   },
   username: string,
   password: string,
 ) {

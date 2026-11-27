@@ -2,14 +2,18 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../src/app";
 import type { Env } from "../src/env";
 import { createSqliteD1 } from "./sqlite-d1";
-import { bearer, setupOwner } from "./helpers";
+import { bearer, setupOwner, TEST_BACKEND_ENCRYPTION_KEY } from "./helpers";
 
 let app: ReturnType<typeof createApp>;
-let env: { DB: Env["DB"]; JWT_SECRET: string };
+let env: { DB: Env["DB"]; JWT_SECRET: string; BACKEND_ENCRYPTION_KEY: string };
 
 beforeEach(() => {
   app = createApp();
-  env = { DB: createSqliteD1() as unknown as Env["DB"], JWT_SECRET: "test-secret-for-jwt-signing" };
+  env = {
+    DB: createSqliteD1() as unknown as Env["DB"],
+    JWT_SECRET: "test-secret-for-jwt-signing",
+    BACKEND_ENCRYPTION_KEY: TEST_BACKEND_ENCRYPTION_KEY,
+  };
 });
 
 function json(method: string, path: string, body: unknown, headers: Record<string, string> = {}) {

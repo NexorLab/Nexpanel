@@ -234,9 +234,13 @@ export default function Backends() {
     setFormError(null);
     try {
       if (editing) {
-        await getApi().updateBackend(editing.id, toBackendBody(form));
-        toast.push({ type: "success", title: t("backends.toasts.updated") });
-      } else {
+           const body: Partial<ReturnType<typeof toBackendBody>> = toBackendBody(form);
+           if (!body.uuid) delete body.uuid;
+           if (!body.password) delete body.password;
+
+           await getApi().updateBackend(editing.id, body);
+           toast.push({ type: "success", title: t("backends.toasts.updated") });
+         } else {
         await getApi().createBackend(toBackendBody(form));
         toast.push({ type: "success", title: t("backends.toasts.created") });
       }
@@ -490,6 +494,12 @@ export default function Backends() {
           <div className="form-section-title">
             {t("backends.form.sectionTransport")}
           </div>
+
+        {editing && (
+          <p className="form-hint-inline">
+            برای حفظ UUID یا رمز عبور فعلی، این فیلدها را خالی بگذارید.
+                   </p>
+        )}
 
           <div className="form-grid-2">
             <Select

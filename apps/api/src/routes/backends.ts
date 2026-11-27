@@ -11,7 +11,7 @@ import {
 } from "@nexpanel/core";
 import type { AppEnv } from "../env";
 import { jsonError } from "../errors";
-import { requireAuth } from "../middleware/auth";
+import { requireAuth, requireRole } from "../middleware/auth";
 import { createRepositories } from "../storage/d1";
 import { rebuildBackendConfigs } from "../services/configs";
 
@@ -35,6 +35,13 @@ const STATUSES = ["active", "disabled"] as const;
 const PROBE_TIMEOUT_MS = 5000;
 
 type BackendFields = Omit<Backend, "id" | "createdAt" | "updatedAt">;
+function redactBackendCredentials(backend: Backend): Backend {
+  return {
+    ...backend,
+    uuid: null,
+    password: null,
+  };
+}
 
 export const backendRoutes = new Hono<AppEnv>();
 
@@ -294,10 +301,10 @@ backendRoutes.get("/", async (c) => {
     protocolParam && (PROTOCOLS as readonly string[]).includes(protocolParam)
       ? backends.filter((backend) => backend.protocol === protocolParam)
       : backends;
-  return c.json(filtered);
+  return c.json(filtered.map(redactBackendCredentials));
 });
 
-backendRoutes.post("/", async (c) => {
+backendRoutes.post("/", requireRole("admin"), async (c) => {
   const repos = createRepositories(c.env);
   const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
   const fields = parseCreateBody(body);
@@ -310,10 +317,10 @@ backendRoutes.post("/", async (c) => {
     ...fields,
     sortOrder: existing.length + 1,
   });
-  return c.json(backend, 201);
+  return c.json(redactBackendCredentials(backend), 201);
 });
 
-backendRoutes.patch("/:id", async (c) => {
+backendRoutes.patch("/:id", requireRole("admin"), async (c) => {
   const repos = createRepositories(c.env);
   const id = c.req.param("id");
   const stored = await repos.backends.getById(id);
@@ -350,10 +357,10 @@ backendRoutes.patch("/:id", async (c) => {
     params: { name: backend.name },
     at: now(),
   });
-  return c.json(backend);
+  return c.json(redactBackendCredentials(backend));
 });
 
-backendRoutes.delete("/:id", async (c) => {
+backendRoutes.delete("/:id", requireRole("admin"), async (c) => {
   const repos = createRepositories(c.env);
   const id = c.req.param("id");
   if (!(await repos.backends.getById(id))) throw new NotFoundError("Backend");
@@ -361,7 +368,7 @@ backendRoutes.delete("/:id", async (c) => {
   return c.body(null, 204);
 });
 
-backendRoutes.post("/:id/test", async (c) => {
+backendRoutes.post("/:id/test", requireRole("admin"), async (c) => {
   const repos = createRepositories(c.env);
   const backend = await repos.backends.getById(c.req.param("id"));
   if (!backend) throw new NotFoundError("Backend");
